@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Order, OrderStatus } from "@/types/order"
 import { toast } from "sonner"
@@ -16,9 +17,10 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, Eye, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, Eye, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut } from "lucide-react"
 
 export default function Dashboard() {
+  const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [filterDate, setFilterDate] = useState(() => {
@@ -57,6 +59,12 @@ export default function Dashboard() {
   const resetToToday = () => {
     const today = new Date()
     setFilterDate(today.toISOString().split('T')[0])
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
   }
 
   // Calcular KPIs
@@ -99,6 +107,9 @@ export default function Dashboard() {
             </Button>
           </div>
           <Button variant="outline" size="icon" onClick={fetchOrders}><RefreshCw size={16}/></Button>
+          <Button variant="ghost" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" /> Salir
+          </Button>
           <Link href="/nuevo-pedido">
             <Button className="bg-rose-600 hover:bg-rose-700 shadow-md transition-transform active:scale-95">
               <PlusCircle className="mr-2 h-4 w-4" /> Registrar Pedido
