@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -13,7 +12,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,8 +26,7 @@ export default function LoginPage() {
       toast.error("Error de acceso", { description: "Credenciales incorrectas" })
     } else {
       toast.success("¡Bienvenido!", { description: "Accediendo al sistema..." })
-      router.push("/")
-      router.refresh()
+      window.location.href = "/"
     }
     setLoading(false)
   }
