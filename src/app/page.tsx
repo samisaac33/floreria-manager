@@ -80,148 +80,154 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+    <main className="p-2 md:p-8 max-w-7xl mx-auto space-y-2 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-0">
         <div className="flex items-center gap-3">
           <div className="bg-rose-600 p-2 rounded-lg text-white font-bold text-xl">F</div>
           <div>
-            <h1 className="text-2xl font-bold">Logística Florería</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Logística Florería</h1>
             <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Panel de Control</p>
           </div>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
           <div className="flex gap-2 items-center">
             <input
               type="date"
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              className="flex-1 md:flex-none px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
             />
             <Button 
               variant="outline" 
               size="sm"
               onClick={resetToToday}
-              className="text-xs"
+              className="text-xs shrink-0"
             >
               Hoy
             </Button>
           </div>
-          <Button variant="outline" size="icon" onClick={fetchOrders}><RefreshCw size={16}/></Button>
-          <Button variant="ghost" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" /> Salir
-          </Button>
-          <Link href="/nuevo-pedido">
-            <Button className="bg-rose-600 hover:bg-rose-700 shadow-md transition-transform active:scale-95">
-              <PlusCircle className="mr-2 h-4 w-4" /> Registrar Pedido
+          <div className="flex gap-2 items-center">
+            <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10" onClick={fetchOrders}>
+              <RefreshCw size={16}/>
             </Button>
-          </Link>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs md:text-sm">
+              <LogOut className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Salir
+            </Button>
+            <Link href="/nuevo-pedido" className="flex-1 md:flex-none">
+              <Button className="w-full md:w-auto bg-rose-600 hover:bg-rose-700 shadow-md transition-transform active:scale-95 text-xs md:text-sm">
+                <PlusCircle className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Registrar Pedido
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Resumen de Operaciones (KPIs) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-amber-50 border-amber-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-amber-700">Pendientes</CardTitle>
-            <Clock className="h-5 w-5 text-amber-600" />
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
+        <Card className="bg-amber-50 border-amber-200 py-2 md:py-6 px-2 md:px-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
+            <CardTitle className="text-[10px] md:text-sm font-medium text-amber-700">Pendientes</CardTitle>
+            <Clock className="h-3 w-3 md:h-5 md:w-5 text-amber-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-amber-700">{pendientes}</div>
-            <p className="text-xs text-amber-600 mt-1">Pendiente + En Taller</p>
+          <CardContent className="p-0 pt-1">
+            <div className="text-lg md:text-3xl font-bold text-amber-700">{pendientes}</div>
+            <p className="text-[9px] md:text-xs text-amber-600 mt-0.5 md:mt-1 hidden md:block">Pendiente + En Taller</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50 border-purple-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-purple-700">En Ruta</CardTitle>
-            <Truck className="h-5 w-5 text-purple-600" />
+        <Card className="bg-purple-50 border-purple-200 py-2 md:py-6 px-2 md:px-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
+            <CardTitle className="text-[10px] md:text-sm font-medium text-purple-700">En Ruta</CardTitle>
+            <Truck className="h-3 w-3 md:h-5 md:w-5 text-purple-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-700">{enRuta}</div>
-            <p className="text-xs text-purple-600 mt-1">En camino</p>
+          <CardContent className="p-0 pt-1">
+            <div className="text-lg md:text-3xl font-bold text-purple-700">{enRuta}</div>
+            <p className="text-[9px] md:text-xs text-purple-600 mt-0.5 md:mt-1 hidden md:block">En camino</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-emerald-50 border-emerald-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-700">Entregados</CardTitle>
-            <CheckCircle className="h-5 w-5 text-emerald-600" />
+        <Card className="bg-emerald-50 border-emerald-200 py-2 md:py-6 px-2 md:px-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
+            <CardTitle className="text-[10px] md:text-sm font-medium text-emerald-700">Entregados</CardTitle>
+            <CheckCircle className="h-3 w-3 md:h-5 md:w-5 text-emerald-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-emerald-700">{entregados}</div>
-            <p className="text-xs text-emerald-600 mt-1">Entregado</p>
+          <CardContent className="p-0 pt-1">
+            <div className="text-lg md:text-3xl font-bold text-emerald-700">{entregados}</div>
+            <p className="text-[9px] md:text-xs text-emerald-600 mt-0.5 md:mt-1 hidden md:block">Entregado</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="border rounded-xl bg-white shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead>Entrega</TableHead>
-              <TableHead>Destinatario</TableHead>
-              <TableHead>Producto</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Ubicación</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id} className="border-b last:border-0">
-                <TableCell>
-                  <div className="text-sm font-bold text-slate-700">{order.delivery_date}</div>
-                  <div className="text-[10px] text-slate-400 font-medium uppercase">{order.delivery_time}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="font-semibold text-slate-900 capitalize">{order.recipient_name}</div>
-                  <div className="text-xs text-slate-500 flex items-center gap-1">
-                    <MapPin size={10} className="text-rose-400"/> {order.recipient_address.substring(0, 25)}...
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="font-mono bg-slate-50">{order.product_code}</Badge>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <select 
-                    className={`text-[11px] font-bold rounded-full px-3 py-1 border-none focus:ring-2 focus:ring-rose-500 cursor-pointer ${statusStyles[order.status]}`}
-                    value={order.status}
-                    onChange={(e) => updateStatus(order.id!, e.target.value as OrderStatus)}
-                  >
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en_preparacion">En Taller</option>
-                    <option value="en_camino">En Camino</option>
-                    <option value="entregado">Entregado</option>
-                  </select>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1 items-center">
-                    {/* BOTÓN COPIAR GPS o Indicador sin ubicación */}
-                    {order.gps_url ? (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-blue-500 hover:bg-blue-50"
-                        onClick={() => copyToClipboard(order.gps_url!)}
-                        title="Copiar Link GPS"
-                      >
-                        <Copy size={16} />
-                      </Button>
-                    ) : (
-                      <div className="flex items-center gap-1 text-slate-400 text-xs">
-                        <MapPinOff size={16} />
-                        <span className="hidden sm:inline">Sin ubicación</span>
-                      </div>
-                    )}
-
-                    {/* MODAL DETALLES */}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Imprimir
+      <div className="border rounded-xl bg-white shadow-sm overflow-hidden w-full">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead className="text-xs md:text-sm">Entrega</TableHead>
+                <TableHead className="text-xs md:text-sm">Destinatario</TableHead>
+                <TableHead className="text-xs md:text-sm">Producto</TableHead>
+                <TableHead className="text-xs md:text-sm">Estado</TableHead>
+                <TableHead className="text-right text-xs md:text-sm">Ubicación</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {orders.map((order) => (
+                <TableRow key={order.id} className="border-b last:border-0">
+                  <TableCell className="text-xs">
+                    <div className="font-bold text-slate-700">{order.delivery_date}</div>
+                    <div className="text-[10px] text-slate-400 font-medium uppercase">{order.delivery_time}</div>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <div className="font-semibold text-slate-900 capitalize">{order.recipient_name}</div>
+                    <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                      <MapPin size={10} className="text-rose-400 shrink-0"/> 
+                      <span className="truncate">{order.recipient_address.substring(0, 20)}...</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="font-mono bg-slate-50 text-[10px] md:text-xs">{order.product_code}</Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <select 
+                      className={`text-[10px] md:text-[11px] font-bold rounded-full px-2 md:px-3 py-1 border-none focus:ring-2 focus:ring-rose-500 cursor-pointer ${statusStyles[order.status]}`}
+                      value={order.status}
+                      onChange={(e) => updateStatus(order.id!, e.target.value as OrderStatus)}
+                    >
+                      <option value="pendiente">Pendiente</option>
+                      <option value="en_preparacion">En Taller</option>
+                      <option value="en_camino">En Camino</option>
+                      <option value="entregado">Entregado</option>
+                    </select>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1.5 md:gap-1 items-center">
+                      {/* BOTÓN COPIAR GPS o Indicador sin ubicación */}
+                      {order.gps_url ? (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 md:h-8 md:w-8 text-blue-500 hover:bg-blue-50 shrink-0"
+                          onClick={() => copyToClipboard(order.gps_url!)}
+                          title="Copiar Link GPS"
+                        >
+                          <Copy size={14} className="md:w-4 md:h-4" />
                         </Button>
-                      </DialogTrigger>
+                      ) : (
+                        <div className="flex items-center gap-1 text-slate-400 text-[10px] md:text-xs shrink-0">
+                          <MapPinOff size={14} className="md:w-4 md:h-4" />
+                          <span className="hidden sm:inline">Sin ubicación</span>
+                        </div>
+                      )}
+
+                      {/* MODAL DETALLES */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-[10px] md:text-sm px-2 md:px-3 shrink-0">
+                            Imprimir
+                          </Button>
+                        </DialogTrigger>
                       <DialogContent className="max-w-md bg-white">
                         <DialogHeader>
                           <DialogTitle className="text-rose-600 flex items-center gap-2">
@@ -272,17 +278,18 @@ export default function Dashboard() {
                       </DialogContent>
                     </Dialog>
 
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:bg-emerald-50" asChild>
-                      <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g,'')}`} target="_blank">
-                        <Phone size={18} />
-                      </a>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 text-emerald-600 hover:bg-emerald-50 shrink-0" asChild>
+                        <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g,'')}`} target="_blank">
+                          <Phone size={14} className="md:w-[18px] md:h-[18px]" />
+                        </a>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </main>
   )
