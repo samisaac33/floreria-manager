@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef, type ChangeEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -17,7 +17,7 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2 } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2 } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -27,6 +27,9 @@ export default function Dashboard() {
     const today = new Date()
     return today.toISOString().split('T')[0] // YYYY-MM-DD
   })
+  const [evidenceUploading, setEvidenceUploading] = useState(false)
+  const [evidenceOrderId, setEvidenceOrderId] = useState<string | null>(null)
+  const evidenceInputRef = useRef<HTMLInputElement | null>(null)
 
   async function fetchOrders() {
     setLoading(true)
@@ -68,6 +71,68 @@ export default function Dashboard() {
 
     toast.success("Pedido eliminado")
     fetchOrders()
+  }
+
+  const handleEvidenceUploadClick = (orderId: string) => {
+    setEvidenceOrderId(orderId)
+    evidenceInputRef.current?.click()
+  }
+
+  const handleEvidenceFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !evidenceOrderId) return
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Archivo inválido", {
+        description: "Por favor selecciona una imagen.",
+      })
+      return
+    }
+
+    setEvidenceUploading(true)
+
+    try {
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${evidenceOrderId}-admin-${Date.now()}.${fileExt}`
+      const filePath = fileName
+
+      const { error: uploadError } = await supabase.storage
+        .from("delivery-photos")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        })
+
+      if (uploadError) {
+        throw uploadError
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("delivery-photos").getPublicUrl(filePath)
+
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ delivery_photo_url: publicUrl })
+        .eq("id", evidenceOrderId)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      toast.success("Evidencia subida correctamente")
+      fetchOrders()
+    } catch (error: any) {
+      toast.error("Error al subir la evidencia", {
+        description: error.message || "Intenta nuevamente en unos segundos.",
+      })
+    } finally {
+      setEvidenceUploading(false)
+      setEvidenceOrderId(null)
+      if (evidenceInputRef.current) {
+        evidenceInputRef.current.value = ""
+      }
+    }
   }
 
   const resetToToday = () => {
@@ -174,6 +239,13 @@ export default function Dashboard() {
 
       <div className="border rounded-xl bg-white shadow-sm overflow-hidden w-full">
         <div className="overflow-x-auto">
+          <input
+            ref={evidenceInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleEvidenceFileChange}
+          />
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
@@ -181,6 +253,7 @@ export default function Dashboard() {
                 <TableHead className="text-xs md:text-sm">Destinatario</TableHead>
                 <TableHead className="text-xs md:text-sm">Producto</TableHead>
                 <TableHead className="text-xs md:text-sm">Estado</TableHead>
+                <TableHead className="text-center text-xs md:text-sm">Evidencia</TableHead>
                 <TableHead className="text-right text-xs md:text-sm">Ubicación</TableHead>
               </TableRow>
             </TableHeader>
@@ -214,6 +287,52 @@ export default function Dashboard() {
                       <option value="en_camino">En Camino</option>
                       <option value="entregado">Entregado</option>
                     </select>
+                  </TableCell>
+                  <TableCell className="text-center text-xs">
+                    {order.delivery_photo_url ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 md:h-8 md:w-8 text-slate-600 hover:bg-slate-50 shrink-0"
+                            title="Ver evidencia"
+                          >
+                            <ImageIcon size={14} className="md:w-4 md:h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm md:max-w-lg bg-white">
+                          <DialogHeader>
+                            <DialogTitle className="text-slate-800">Evidencia de entrega</DialogTitle>
+                            <DialogDescription>
+                              Foto registrada para este pedido.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="mt-2">
+                            <img
+                              src={order.delivery_photo_url}
+                              alt="Evidencia de entrega"
+                              className="w-full h-auto rounded-md border border-slate-200"
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 md:h-8 md:w-8 text-amber-600 hover:bg-amber-50 shrink-0"
+                        onClick={() => handleEvidenceUploadClick(order.id!)}
+                        disabled={evidenceUploading && evidenceOrderId === order.id}
+                        title="Subir evidencia"
+                      >
+                        {evidenceUploading && evidenceOrderId === order.id ? (
+                          <Loader2 className="h-3 w-3 md:w-4 md:h-4 animate-spin" />
+                        ) : (
+                          <Upload size={14} className="md:w-4 md:h-4" />
+                        )}
+                      </Button>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1.5 md:gap-1 items-center">

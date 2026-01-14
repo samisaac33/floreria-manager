@@ -10,6 +10,15 @@ import { QRCodeSVG } from "qrcode.react"
 export default function ImprimirRecibo() {
   const { id } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
+  const [deliveryUrl, setDeliveryUrl] = useState<string>("")
+
+  useEffect(() => {
+    // Construir la URL de entrega
+    if (typeof window !== 'undefined') {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+      setDeliveryUrl(`${baseUrl}/entregar/${id}`)
+    }
+  }, [id])
 
   useEffect(() => {
     async function getOrder() {
@@ -119,6 +128,26 @@ export default function ImprimirRecibo() {
           </div>
           <div className="border-t-2 border-slate-900 pt-2 text-center">
             <p className="text-[8px] font-black uppercase">Firma / Sello de Recepción</p>
+          </div>
+        </div>
+
+        {/* Sección 5: Control de Reparto */}
+        <div className="mt-6 border-t-2 border-slate-300 pt-3">
+          <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-700 mb-2 text-center">
+            REGISTRO DE ENTREGA
+          </h2>
+          <div className="flex flex-col items-center gap-2">
+            <div className="bg-white p-2 rounded border-2 border-slate-400">
+              {deliveryUrl && (
+                <QRCodeSVG 
+                  value={deliveryUrl} 
+                  size={100} 
+                />
+              )}
+            </div>
+            <p className="text-[8px] text-slate-600 font-medium text-center max-w-[120px] leading-tight">
+              Repartidor: Una vez entregado, escanea este QR para subir la foto de prueba
+            </p>
           </div>
         </div>
 
