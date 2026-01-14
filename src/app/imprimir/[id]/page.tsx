@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Order } from "@/types/order"
 import { Printer, MapPin, Phone, User, Package, Clock } from "lucide-react"
+import { QRCodeSVG } from "qrcode.react"
 
 export default function ImprimirRecibo() {
   const { id } = useParams()
@@ -59,9 +60,19 @@ export default function ImprimirRecibo() {
                 <p className="text-[9px] uppercase font-bold text-slate-500">Destinatario</p>
                 <p className="text-base font-black uppercase leading-tight">{order.recipient_name}</p>
               </div>
-              <div>
-                <p className="text-[9px] uppercase font-bold text-slate-500">Dirección Exacta</p>
-                <p className="text-sm font-bold leading-tight">{order.recipient_address}</p>
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <p className="text-[9px] uppercase font-bold text-slate-500">Dirección Exacta</p>
+                  <p className="text-sm font-bold leading-tight">{order.recipient_address}</p>
+                </div>
+                {order.gps_url && (
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="bg-white p-1 rounded border border-slate-300">
+                      <QRCodeSVG value={order.gps_url} size={80} />
+                    </div>
+                    <p className="text-[8px] text-slate-600 font-medium text-center">Escanear para GPS</p>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-[9px] uppercase font-bold text-slate-500">Teléfono</p>
