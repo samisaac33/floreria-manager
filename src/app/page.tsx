@@ -17,7 +17,7 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, Eye, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -218,8 +218,8 @@ export default function Dashboard() {
                     {/* MODAL DETALLES */}
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-rose-600">
-                          <Eye size={18} />
+                        <Button variant="outline" size="sm">
+                          Imprimir
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-md bg-white">
