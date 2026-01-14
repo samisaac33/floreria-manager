@@ -12,12 +12,12 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose 
 } from "@/components/ui/dialog"
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2 } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -55,6 +55,20 @@ export default function Dashboard() {
       description: "El link de GPS ya está en tu portapapeles.",
     });
   };
+
+  const deleteOrder = async (id: string) => {
+    const { error } = await supabase.from("orders").delete().eq("id", id)
+
+    if (error) {
+      toast.error("No se pudo eliminar el pedido", {
+        description: "Intenta nuevamente en unos segundos.",
+      })
+      return
+    }
+
+    toast.success("Pedido eliminado")
+    fetchOrders()
+  }
 
   const resetToToday = () => {
     const today = new Date()
@@ -228,61 +242,103 @@ export default function Dashboard() {
                             Imprimir
                           </Button>
                         </DialogTrigger>
-                      <DialogContent className="max-w-md bg-white">
-                        <DialogHeader>
-                          <DialogTitle className="text-rose-600 flex items-center gap-2">
-                            <Package /> Detalle de Entrega
-                          </DialogTitle>
-                          {/* Esto arregla el warning de la consola */}
-                          <DialogDescription>
-                            Información completa del pedido para el equipo de logística.
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="space-y-4 pt-4">
-                          <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
-                            <h4 className="text-[10px] font-bold uppercase text-rose-400 mb-1 tracking-widest">Contenido de la Tarjeta</h4>
-                            <p className="text-sm font-serif italic text-slate-800 leading-relaxed">
-                              "{order.dedication || 'Sin dedicatoria'}"
-                            </p>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="p-3 bg-slate-50 rounded-lg">
-                              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Quien compra</h4>
-                              <p className="text-sm font-semibold">{order.client_name}</p>
-                              <p className="text-xs text-slate-500">{order.client_phone}</p>
+                        <DialogContent className="max-w-md bg-white">
+                          <DialogHeader>
+                            <DialogTitle className="text-rose-600 flex items-center gap-2">
+                              <Package /> Detalle de Entrega
+                            </DialogTitle>
+                            {/* Esto arregla el warning de la consola */}
+                            <DialogDescription>
+                              Información completa del pedido para el equipo de logística.
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          <div className="space-y-4 pt-4">
+                            <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
+                              <h4 className="text-[10px] font-bold uppercase text-rose-400 mb-1 tracking-widest">Contenido de la Tarjeta</h4>
+                              <p className="text-sm font-serif italic text-slate-800 leading-relaxed">
+                                "{order.dedication || 'Sin dedicatoria'}"
+                              </p>
                             </div>
-                            <div className="p-3 bg-slate-50 rounded-lg">
-                              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Producto</h4>
-                              <p className="text-sm font-semibold">{order.product_code}</p>
-                              <p className="text-xs text-slate-500">{order.extras || 'Sin extras'}</p>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="p-3 bg-slate-50 rounded-lg">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Quien compra</h4>
+                                <p className="text-sm font-semibold">{order.client_name}</p>
+                                <p className="text-xs text-slate-500">{order.client_phone}</p>
+                              </div>
+                              <div className="p-3 bg-slate-50 rounded-lg">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Producto</h4>
+                                <p className="text-sm font-semibold">{order.product_code}</p>
+                                <p className="text-xs text-slate-500">{order.extras || 'Sin extras'}</p>
+                              </div>
+                            </div>
+
+                            <div className="border-t pt-4">
+                              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Notas del Taller</h4>
+                              <p className="text-xs text-slate-600 bg-amber-50 p-2 rounded border border-amber-100 italic">
+                                {order.observations || 'Sin observaciones'}
+                              </p>
                             </div>
                           </div>
 
-                          <div className="border-t pt-4">
-                            <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Notas del Taller</h4>
-                            <p className="text-xs text-slate-600 bg-amber-50 p-2 rounded border border-amber-100 italic">
-                              {order.observations || 'Sin observaciones'}
-                            </p>
+                          <div className="mt-4 flex gap-2">
+                            <Button
+                              className="w-full bg-slate-900 hover:bg-black gap-2"
+                              onClick={() => window.open(`/imprimir/${order.id}`, "_blank")}
+                            >
+                              <Printer size={16} /> Generar Recibo de Entrega
+                            </Button>
                           </div>
-                        </div>
+                        </DialogContent>
+                      </Dialog>
 
-                        <div className="mt-4 flex gap-2">
-                           <Button className="w-full bg-slate-900 hover:bg-black gap-2"
-                           onClick={() => window.open(`/imprimir/${order.id}`, '_blank')}
-                           >
-                             <Printer size={16} /> Generar Recibo de Entrega
-                           </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-
-                      <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 text-emerald-600 hover:bg-emerald-50 shrink-0" asChild>
-                        <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g,'')}`} target="_blank">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 md:h-8 md:w-8 text-emerald-600 hover:bg-emerald-50 shrink-0"
+                        asChild
+                      >
+                        <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`} target="_blank">
                           <Phone size={14} className="md:w-[18px] md:h-[18px]" />
                         </a>
                       </Button>
+
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 md:h-8 md:w-8 text-red-600 hover:bg-red-50 shrink-0"
+                          >
+                            <Trash2 size={14} className="md:w-4 md:h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm bg-white">
+                          <DialogHeader>
+                            <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
+                            <DialogDescription>
+                              ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter className="mt-2">
+                            <DialogClose asChild>
+                              <Button variant="outline" className="w-full sm:w-auto">
+                                Cancelar
+                              </Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button
+                                variant="destructive"
+                                className="w-full sm:w-auto"
+                                onClick={() => deleteOrder(order.id!)}
+                              >
+                                Eliminar
+                              </Button>
+                            </DialogClose>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </TableCell>
                 </TableRow>
