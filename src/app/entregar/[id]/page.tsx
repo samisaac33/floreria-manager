@@ -7,21 +7,21 @@ import { Order } from "@/types/order"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Camera, Upload, CheckCircle, Loader2, Package, Image } from "lucide-react"
+import { Camera, Upload, CheckCircle, Loader2, Package } from "lucide-react"
 
 export default function EntregarPedido() {
   const { id } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
-  const [uploaded, setUploaded] = useState(false)
+  const [alreadyUploaded, setAlreadyUploaded] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const cameraInputRef = useRef<HTMLInputElement>(null)
-  const galleryInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function getOrder() {
+      setLoading(true)
       const { data, error } = await supabase
         .from("orders")
         .select("*")
@@ -32,10 +32,17 @@ export default function EntregarPedido() {
         toast.error("Error al cargar el pedido", {
           description: "No se pudo encontrar el pedido."
         })
+        setLoading(false)
         return
       }
       
       setOrder(data)
+      
+      // Verificar si ya tiene foto de entrega
+      if (data?.delivery_photo_url) {
+        setAlreadyUploaded(true)
+      }
+      
       setLoading(false)
     }
     getOrder()
@@ -101,7 +108,11 @@ export default function EntregarPedido() {
         throw updateError
       }
 
-      setUploaded(true)
+      // Actualizar el estado local para mostrar el mensaje de "ya registrada"
+      setAlreadyUploaded(true)
+      setSelectedFile(null)
+      setPreview(null)
+      
       toast.success("¡Entrega registrada con éxito!", {
         description: "La foto de entrega ha sido guardada correctamente."
       })
@@ -138,7 +149,8 @@ export default function EntregarPedido() {
     )
   }
 
-  if (uploaded) {
+  // Si ya está entregado, mostrar mensaje
+  if (alreadyUploaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
         <Card className="w-full max-w-md shadow-xl border-t-4 border-t-emerald-500">
@@ -148,10 +160,16 @@ export default function EntregarPedido() {
                 <CheckCircle className="h-12 w-12 text-emerald-600" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-emerald-600">¡Entrega registrada con éxito!</h2>
-            <p className="text-slate-600">
-              La foto de entrega ha sido guardada correctamente para el pedido de {order.recipient_name}.
+            <h2 className="text-2xl font-bold text-emerald-600">✅ Entrega ya registrada</h2>
+            <p className="text-slate-600 text-lg">
+              Muchas gracias por tu trabajo.
             </p>
+            {order && (
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <p className="text-sm text-slate-500">Pedido: {order.recipient_name}</p>
+                <p className="text-xs text-slate-400 mt-1">ID: {order.id?.substring(0, 8).toUpperCase()}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -200,43 +218,24 @@ export default function EntregarPedido() {
           </CardHeader>
           <CardContent className="space-y-4">
             {!preview ? (
-              <div className="space-y-3">
-                {/* Inputs ocultos */}
+              <div>
+                {/* Input oculto - permite elegir entre cámara y galería en móviles */}
                 <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <input
-                  ref={galleryInputRef}
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
                 
-                {/* Botón para tomar foto con cámara */}
+                {/* Botón principal */}
                 <Button
-                  onClick={() => cameraInputRef.current?.click()}
+                  onClick={() => fileInputRef.current?.click()}
                   className="w-full bg-rose-600 hover:bg-rose-700 text-white py-6 text-lg font-bold shadow-md"
                   size="lg"
                 >
                   <Camera className="mr-2 h-5 w-5" />
-                  📸 Tomar Foto Ahora
-                </Button>
-                
-                {/* Botón para seleccionar de galería */}
-                <Button
-                  onClick={() => galleryInputRef.current?.click()}
-                  variant="outline"
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 py-6 text-lg font-bold shadow-sm"
-                  size="lg"
-                >
-                  <Image className="mr-2 h-5 w-5" />
-                  🖼️ Seleccionar de Galería
+                  📸 Registrar Evidencia de Entrega
                 </Button>
               </div>
             ) : (
@@ -254,11 +253,8 @@ export default function EntregarPedido() {
                     onClick={() => {
                       setSelectedFile(null)
                       setPreview(null)
-                      if (cameraInputRef.current) {
-                        cameraInputRef.current.value = ''
-                      }
-                      if (galleryInputRef.current) {
-                        galleryInputRef.current.value = ''
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = ''
                       }
                     }}
                     className="flex-1"
