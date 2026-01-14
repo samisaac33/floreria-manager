@@ -43,117 +43,113 @@ export default function ImprimirRecibo() {
       </div>
 
       {/* ÁREA DE IMPRESIÓN - Ancho A5 (148mm) */}
-      <div className="max-w-[148mm] mx-auto border-2 border-slate-200 p-3 rounded-none shadow-none print:border-none print:p-2 print:max-w-[148mm]">
+      <div className="max-w-[148mm] mx-auto border-2 border-slate-200 p-2 rounded-none shadow-none print:border-none print:p-1.5 print:max-w-[148mm]">
         
         {/* Encabezado del Recibo */}
-        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-2">
+        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1 mb-2">
           <div>
-            <h1 className="text-xl font-black uppercase tracking-tighter text-rose-600">Recibo de Entrega</h1>
-            <p className="text-[10px] font-bold text-slate-500 mt-0.5">ID: {order.id?.substring(0, 8).toUpperCase()}</p>
+            <h1 className="text-lg font-black uppercase tracking-tighter text-rose-600">Recibo de Entrega</h1>
+            <p className="text-[9px] font-bold text-slate-500 mt-0.5">ID: {order.id?.substring(0, 8).toUpperCase()}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold uppercase">Fecha de Entrega</p>
-            <p className="text-base font-black">{order.delivery_date}</p>
-            <p className="text-[10px] font-medium">{order.delivery_time}</p>
+            <p className="text-[9px] font-bold uppercase">Fecha</p>
+            <p className="text-sm font-black">{order.delivery_date}</p>
+            <p className="text-[9px] font-medium">{order.delivery_time}</p>
           </div>
         </div>
 
-        {/* Sección 1: Destino (Lo más importante para el delivery) */}
-        <div className="grid grid-cols-1 gap-2 mb-2">
-          <div className="bg-slate-100 p-2 rounded">
-            <h2 className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 italic">
-              <MapPin size={12} className="text-rose-600" /> Datos de Destino
-            </h2>
-            <div className="space-y-1.5">
-              <div>
-                <p className="text-[9px] uppercase font-bold text-slate-500">Destinatario</p>
-                <p className="text-base font-black uppercase leading-tight">{order.recipient_name}</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="flex-1">
-                  <p className="text-[9px] uppercase font-bold text-slate-500">Dirección Exacta</p>
-                  <p className="text-sm font-bold leading-tight">{order.recipient_address}</p>
-                </div>
-                {order.gps_url && (
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="bg-white p-1 rounded border border-slate-300">
-                      <QRCodeSVG value={order.gps_url} size={80} />
-                    </div>
-                    <p className="text-[8px] text-slate-600 font-medium text-center">Escanear para GPS</p>
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-[9px] uppercase font-bold text-slate-500">Teléfono</p>
-                <p className="text-xs font-bold tracking-widest leading-none">
-                  {order.recipient_phone}
-                </p>
-              </div>
+        {/* Sección de Cabecera Logística: 3 Columnas */}
+        <div className="grid grid-cols-3 gap-2 mb-2 items-start">
+          {/* Columna Izquierda: QR Registro de Entrega */}
+          <div className="flex flex-col items-center">
+            <div className="bg-white p-1 rounded border border-slate-300">
+              {deliveryUrl && (
+                <QRCodeSVG value={deliveryUrl} size={70} />
+              )}
+            </div>
+            <p className="text-[7px] text-slate-600 font-medium text-center mt-0.5 leading-tight">
+              Escanear al entregar
+            </p>
+          </div>
+
+          {/* Columna Centro: Datos de Destino */}
+          <div className="text-center space-y-1">
+            <div>
+              <p className="text-[8px] uppercase font-bold text-slate-500">Destinatario</p>
+              <p className="text-sm font-black uppercase leading-tight">{order.recipient_name}</p>
+            </div>
+            <div>
+              <p className="text-[8px] uppercase font-bold text-slate-500">Dirección</p>
+              <p className="text-[10px] font-bold leading-tight">{order.recipient_address}</p>
+            </div>
+            <div>
+              <p className="text-[8px] uppercase font-bold text-slate-500">Teléfono</p>
+              <p className="text-xs font-bold tracking-widest">
+                {order.recipient_phone}
+              </p>
             </div>
           </div>
+
+          {/* Columna Derecha: QR GPS */}
+          <div className="flex flex-col items-center">
+            {order.gps_url ? (
+              <>
+                <div className="bg-white p-1 rounded border border-slate-300">
+                  <QRCodeSVG value={order.gps_url} size={70} />
+                </div>
+                <p className="text-[7px] text-slate-600 font-medium text-center mt-0.5 leading-tight">
+                  Escanear para Ruta
+                </p>
+              </>
+            ) : (
+              <div className="bg-slate-100 p-1 rounded border border-slate-300 w-[70px] h-[70px] flex items-center justify-center">
+                <p className="text-[7px] text-slate-400 text-center">Sin GPS</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Sección 2: Producto */}
-        <div className="grid grid-cols-2 gap-2 mb-2 border-y border-slate-200 py-2">
+        {/* Detalles Inferiores: Producto y Cliente */}
+        <div className="grid grid-cols-2 gap-2 mb-2 border-y border-slate-200 py-1.5">
           <div>
-            <h2 className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 italic">
-              <Package size={12} /> Detalle del Pedido
+            <h2 className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+              Producto
             </h2>
-            <p className="text-xs font-black uppercase">{order.product_code}</p>
-            <p className="text-[10px] text-slate-600">Extras: <span className="font-bold">{order.extras || "Ninguno"}</span></p>
+            <p className="text-[10px] font-black uppercase">{order.product_code}</p>
+            <p className="text-[8px] text-slate-600">Extras: <span className="font-bold">{order.extras || "Ninguno"}</span></p>
           </div>
           <div>
-             <h2 className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 italic">
-              <User size={12} /> Cliente (Quien paga)
+            <h2 className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+              Cliente
             </h2>
-            <p className="text-xs font-bold">{order.client_name}</p>
-            <p className="text-[10px] text-slate-500">{order.client_phone}</p>
+            <p className="text-[10px] font-bold">{order.client_name}</p>
+            <p className="text-[8px] text-slate-500">{order.client_phone}</p>
           </div>
         </div>
 
-        {/* Sección 3: Observaciones Críticas */}
+        {/* Notas del Repartidor */}
         <div className="mb-2">
-          <h2 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 italic">Notas para el Repartidor</h2>
-          <div className="border-2 border-slate-900 p-2 bg-amber-50 min-h-[50px]">
-            <p className="text-[10px] font-bold leading-snug">
+          <h2 className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Notas</h2>
+          <div className="border-2 border-slate-900 p-1.5 bg-amber-50 min-h-[40px]">
+            <p className="text-[9px] font-bold leading-snug">
               {order.observations || "Sin instrucciones especiales."}
             </p>
           </div>
         </div>
 
-        {/* Sección 4: Firma de Recibido */}
-        <div className="mt-6 grid grid-cols-2 gap-8">
-          <div className="border-t-2 border-slate-900 pt-2 text-center">
-            <p className="text-[8px] font-black uppercase">Recibido por (Nombre Legible)</p>
+        {/* Firma de Recibido */}
+        <div className="mt-3 grid grid-cols-2 gap-6">
+          <div className="border-t-2 border-slate-900 pt-1.5 text-center">
+            <p className="text-[7px] font-black uppercase">Recibido por</p>
           </div>
-          <div className="border-t-2 border-slate-900 pt-2 text-center">
-            <p className="text-[8px] font-black uppercase">Firma / Sello de Recepción</p>
-          </div>
-        </div>
-
-        {/* Sección 5: Control de Reparto */}
-        <div className="mt-6 border-t-2 border-slate-300 pt-3">
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-700 mb-2 text-center">
-            REGISTRO DE ENTREGA
-          </h2>
-          <div className="flex flex-col items-center gap-2">
-            <div className="bg-white p-2 rounded border-2 border-slate-400">
-              {deliveryUrl && (
-                <QRCodeSVG 
-                  value={deliveryUrl} 
-                  size={100} 
-                />
-              )}
-            </div>
-            <p className="text-[8px] text-slate-600 font-medium text-center max-w-[120px] leading-tight">
-              Repartidor: Una vez entregado, escanea este QR para subir la foto de prueba
-            </p>
+          <div className="border-t-2 border-slate-900 pt-1.5 text-center">
+            <p className="text-[7px] font-black uppercase">Firma / Sello</p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-4 text-center text-[8px] text-slate-400 uppercase font-bold border-t pt-1">
-          <p>Comprobante interno de entrega - Florería Order Manager</p>
+        <div className="mt-2 text-center text-[7px] text-slate-400 uppercase font-bold border-t pt-1">
+          <p>Comprobante interno - Florería Order Manager</p>
         </div>
 
       </div>

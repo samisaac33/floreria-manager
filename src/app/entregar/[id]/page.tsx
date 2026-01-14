@@ -7,7 +7,7 @@ import { Order } from "@/types/order"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Camera, Upload, CheckCircle, Loader2, Package } from "lucide-react"
+import { Camera, Upload, CheckCircle, Loader2, Package, Image } from "lucide-react"
 
 export default function EntregarPedido() {
   const { id } = useParams()
@@ -17,7 +17,8 @@ export default function EntregarPedido() {
   const [uploaded, setUploaded] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function getOrder() {
@@ -199,22 +200,43 @@ export default function EntregarPedido() {
           </CardHeader>
           <CardContent className="space-y-4">
             {!preview ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
+                {/* Inputs ocultos */}
                 <input
-                  ref={fileInputRef}
+                  ref={cameraInputRef}
                   type="file"
                   accept="image/*"
                   capture="environment"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                
+                {/* Botón para tomar foto con cámara */}
                 <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full bg-rose-600 hover:bg-rose-700 text-white py-6 text-lg font-bold"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="w-full bg-rose-600 hover:bg-rose-700 text-white py-6 text-lg font-bold shadow-md"
                   size="lg"
                 >
                   <Camera className="mr-2 h-5 w-5" />
-                  Tomar Foto de Entrega
+                  📸 Tomar Foto Ahora
+                </Button>
+                
+                {/* Botón para seleccionar de galería */}
+                <Button
+                  onClick={() => galleryInputRef.current?.click()}
+                  variant="outline"
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 py-6 text-lg font-bold shadow-sm"
+                  size="lg"
+                >
+                  <Image className="mr-2 h-5 w-5" />
+                  🖼️ Seleccionar de Galería
                 </Button>
               </div>
             ) : (
@@ -232,8 +254,11 @@ export default function EntregarPedido() {
                     onClick={() => {
                       setSelectedFile(null)
                       setPreview(null)
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = ''
+                      if (cameraInputRef.current) {
+                        cameraInputRef.current.value = ''
+                      }
+                      if (galleryInputRef.current) {
+                        galleryInputRef.current.value = ''
                       }
                     }}
                     className="flex-1"
