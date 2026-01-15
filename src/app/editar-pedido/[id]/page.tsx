@@ -15,12 +15,30 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2, Save, User, MapPin, Flower, X } from "lucide-react"
 import Link from "next/link"
 
+// Función helper para obtener la fecha de hoy en formato YYYY-MM-DD (hora local)
+function getTodayDate(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 // Validación del Formulario con Zod - Todos los campos son opcionales
 const orderSchema = z.object({
   recipient_name: z.string().optional().or(z.literal("")),
   recipient_phone: z.string().optional().or(z.literal("")),
   recipient_address: z.string().optional().or(z.literal("")),
-  delivery_date: z.string().optional().or(z.literal("")),
+  delivery_date: z.string()
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => {
+      if (!val || val === "") return true // Campo opcional
+      const today = getTodayDate()
+      return val >= today
+    }, {
+      message: "La fecha no puede ser anterior a hoy"
+    }),
   delivery_time: z.string().optional().or(z.literal("")),
   gps_url: z.string().optional().or(z.literal("")),
   delivery_notes: z.string().optional().or(z.literal("")),
@@ -134,7 +152,7 @@ export default function EditarPedido() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-10 relative px-4 md:px-0">
+    <div className="max-w-3xl mx-auto pb-10 relative px-2 md:px-4">
       <Link href="/">
         <Button
           variant="ghost"
@@ -149,26 +167,28 @@ export default function EditarPedido() {
       
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="destinatario" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger 
-              value="destinatario" 
-              className="gap-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:border-b-2"
-            >
-              <MapPin size={16}/> Destinatario
-            </TabsTrigger>
-            <TabsTrigger 
-              value="cliente" 
-              className="gap-2 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:border-b-2"
-            >
-              <User size={16}/> Cliente
-            </TabsTrigger>
-            <TabsTrigger 
-              value="pedido" 
-              className="gap-2 data-[state=active]:border-rose-600 data-[state=active]:text-rose-600 data-[state=active]:border-b-2"
-            >
-              <Flower size={16}/> Pedido
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-2 md:mx-0 mb-6 md:mb-8 scrollbar-hide">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-3 md:w-full shadow-sm bg-white border border-slate-200 rounded-lg p-1 md:p-1.5">
+              <TabsTrigger 
+                value="destinatario" 
+                className="gap-1.5 md:gap-2 min-w-[120px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                <MapPin size={14} className="md:w-4 md:h-4 shrink-0" /> Destinatario
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cliente" 
+                className="gap-1.5 md:gap-2 min-w-[120px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                <User size={14} className="md:w-4 md:h-4 shrink-0" /> Cliente
+              </TabsTrigger>
+              <TabsTrigger 
+                value="pedido" 
+                className="gap-1.5 md:gap-2 min-w-[120px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                <Flower size={14} className="md:w-4 md:h-4 shrink-0" /> Pedido
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* TAB 1: DESTINATARIO */}
           <TabsContent value="destinatario">
@@ -195,7 +215,11 @@ export default function EditarPedido() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Fecha de Entrega</Label>
-                    <Input type="date" {...form.register("delivery_date")} />
+                    <Input 
+                      type="date" 
+                      {...form.register("delivery_date")}
+                      min={getTodayDate()}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Rango Horario</Label>

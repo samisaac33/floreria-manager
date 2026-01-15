@@ -16,12 +16,30 @@ import { Loader2, Save, User, MapPin, Flower, X, Zap } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
+// Función helper para obtener la fecha de hoy en formato YYYY-MM-DD (hora local)
+function getTodayDate(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 // Validación del Formulario con Zod - Todos los campos son opcionales
 const orderSchema = z.object({
   recipient_name: z.string().optional().or(z.literal("")),
   recipient_phone: z.string().optional().or(z.literal("")),
   recipient_address: z.string().optional().or(z.literal("")),
-  delivery_date: z.string().optional().or(z.literal("")),
+  delivery_date: z.string()
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => {
+      if (!val || val === "") return true // Campo opcional
+      const today = getTodayDate()
+      return val >= today
+    }, {
+      message: "La fecha no puede ser anterior a hoy"
+    }),
   delivery_time: z.string().optional().or(z.literal("")),
   gps_url: z.string().optional().or(z.literal("")),
   delivery_notes: z.string().optional().or(z.literal("")),
@@ -37,7 +55,7 @@ const orderSchema = z.object({
 
 type OrderFormValues = z.infer<typeof orderSchema>
 
-const STORAGE_KEY = "nuevo-pedido-draft"
+const STORAGE_KEY = "floreria_nuevo_pedido_cache"
 
 export default function NuevoPedido() {
   const router = useRouter()
@@ -51,7 +69,7 @@ export default function NuevoPedido() {
     defaultValues: {}
   })
 
-  // Cargar datos desde localStorage al inicio
+  // Auto-load: Cargar datos desde localStorage al inicio
   useEffect(() => {
     if (isInitialized) return
     
@@ -59,10 +77,8 @@ export default function NuevoPedido() {
       const savedData = localStorage.getItem(STORAGE_KEY)
       if (savedData) {
         const parsedData = JSON.parse(savedData)
-        // Rellenar el formulario con los datos guardados
-        Object.keys(parsedData).forEach((key) => {
-          form.setValue(key as keyof OrderFormValues, parsedData[key] || "")
-        })
+        // Rellenar el formulario automáticamente usando form.reset()
+        form.reset(parsedData as OrderFormValues)
       }
     } catch (error) {
       console.error("Error al cargar datos desde localStorage:", error)
@@ -336,8 +352,18 @@ export default function NuevoPedido() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-10 relative px-4 md:px-0">
-      <Link href="/">
+    <div className="max-w-3xl mx-auto pb-10 relative px-2 md:px-4">
+      <Link 
+        href="/"
+        onClick={() => {
+          // Limpiar localStorage cuando el usuario cancela voluntariamente
+          try {
+            localStorage.removeItem(STORAGE_KEY)
+          } catch (error) {
+            console.error("Error al limpiar localStorage:", error)
+          }
+        }}
+      >
         <Button
           variant="ghost"
           size="icon"
@@ -351,32 +377,34 @@ export default function NuevoPedido() {
       
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="captura" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger 
-              value="captura" 
-              className="gap-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 data-[state=active]:border-b-2 text-xs md:text-sm"
-            >
-              <Zap size={14} className="md:w-4 md:h-4" /> Captura
-            </TabsTrigger>
-            <TabsTrigger 
-              value="destinatario" 
-              className="gap-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:border-b-2 text-xs md:text-sm"
-            >
-              <MapPin size={14} className="md:w-4 md:h-4" /> Destinatario
-            </TabsTrigger>
-            <TabsTrigger 
-              value="cliente" 
-              className="gap-2 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:border-b-2 text-xs md:text-sm"
-            >
-              <User size={14} className="md:w-4 md:h-4" /> Cliente
-            </TabsTrigger>
-            <TabsTrigger 
-              value="pedido" 
-              className="gap-2 data-[state=active]:border-rose-600 data-[state=active]:text-rose-600 data-[state=active]:border-b-2 text-xs md:text-sm"
-            >
-              <Flower size={14} className="md:w-4 md:h-4" /> Pedido
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-2 md:mx-0 mb-6 md:mb-8 scrollbar-hide">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-4 md:w-full shadow-sm bg-white border border-slate-200 rounded-lg p-1 md:p-1.5">
+              <TabsTrigger 
+                value="captura" 
+                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 data-[state=active]:border-slate-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                <Zap size={14} className="md:w-4 md:h-4 shrink-0" /> <span className="hidden sm:inline">Captura</span><span className="sm:hidden">Cap.</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="destinatario" 
+                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                <MapPin size={14} className="md:w-4 md:h-4 shrink-0" /> Destinatario
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cliente" 
+                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                <User size={14} className="md:w-4 md:h-4 shrink-0" /> Cliente
+              </TabsTrigger>
+              <TabsTrigger 
+                value="pedido" 
+                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                <Flower size={14} className="md:w-4 md:h-4 shrink-0" /> Pedido
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* TAB 0: CAPTURA RÁPIDA */}
           <TabsContent value="captura">
@@ -455,6 +483,7 @@ export default function NuevoPedido() {
                     <Input 
                       type="date" 
                       {...form.register("delivery_date")}
+                      min={getTodayDate()}
                       className={errorFields.has("delivery_date") ? "border-red-500 bg-red-50" : ""}
                     />
                   </div>
