@@ -31,7 +31,24 @@ export default function ImprimirRecibo() {
   if (!order) return <p className="p-10 text-center text-slate-500">Cargando recibo...</p>
 
   return (
-    <div className="bg-white min-h-screen p-2 md:p-4 font-sans text-slate-900">
+    <>
+      <style jsx global>{`
+        @media print {
+          html, body {
+            height: auto;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow: visible;
+          }
+          @page {
+            margin: 0;
+            size: A4;
+          }
+        }
+      `}</style>
+      <div className="bg-white min-h-screen p-2 md:p-4 font-sans text-slate-900 print:p-0 print:m-0">
       {/* Botón flotante que desaparece al imprimir */}
       <div className="mb-4 flex justify-center print:hidden">
         <button 
@@ -43,7 +60,7 @@ export default function ImprimirRecibo() {
       </div>
 
       {/* ÁREA DE IMPRESIÓN - Ancho A5 (148mm) */}
-      <div className="max-w-[148mm] mx-auto border-2 border-slate-200 p-2 rounded-none shadow-none print:border-none print:p-1.5 print:max-w-[148mm]">
+      <div className="max-w-[148mm] mx-auto border-2 border-slate-200 p-2 rounded-none shadow-none print:border-none print:p-1.5 print:max-w-[148mm] print:max-h-[210mm] print:m-0 print:mx-auto print:overflow-hidden">
         
         {/* Encabezado del Recibo */}
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1 mb-2">
@@ -154,5 +171,6 @@ export default function ImprimirRecibo() {
 
       </div>
     </div>
+    </>
   )
 }

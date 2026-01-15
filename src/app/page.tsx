@@ -17,7 +17,7 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -27,6 +27,7 @@ export default function Dashboard() {
     const today = new Date()
     return today.toISOString().split('T')[0] // YYYY-MM-DD
   })
+  const [statusFilter, setStatusFilter] = useState<'todos' | 'pendientes' | 'en_ruta' | 'entregados'>('todos')
   const [evidenceUploading, setEvidenceUploading] = useState(false)
   const [evidenceOrderId, setEvidenceOrderId] = useState<string | null>(null)
   const evidenceInputRef = useRef<HTMLInputElement | null>(null)
@@ -137,7 +138,7 @@ export default function Dashboard() {
 
   const resetToToday = () => {
     const today = new Date()
-    setFilterDate(today.toISOString().split('T')[0])
+    setFilterDate(today.toLocaleDateString('sv-SE'))
   }
 
   const handleLogout = async () => {
@@ -151,11 +152,27 @@ export default function Dashboard() {
   const enRuta = orders.filter(o => o.status === 'en_camino').length
   const entregados = orders.filter(o => o.status === 'entregado').length
 
+  // Filtrar orders basado en statusFilter
+  const filteredOrders = orders.filter(order => {
+    if (statusFilter === 'todos') return true
+    if (statusFilter === 'pendientes') return order.status === 'pendiente' || order.status === 'en_preparacion'
+    if (statusFilter === 'en_ruta') return order.status === 'en_camino'
+    if (statusFilter === 'entregados') return order.status === 'entregado'
+    return true
+  })
+
   const statusStyles: Record<string, string> = {
     pendiente: "bg-amber-100 text-amber-700",
     en_preparacion: "bg-blue-100 text-blue-700",
     en_camino: "bg-purple-100 text-purple-700",
     entregado: "bg-emerald-100 text-emerald-700",
+  }
+
+  const rowBgStyles: Record<string, string> = {
+    pendiente: "bg-amber-50/50 hover:bg-amber-50",
+    en_preparacion: "bg-blue-50/50 hover:bg-blue-50",
+    en_camino: "bg-purple-50/50 hover:bg-purple-50",
+    entregado: "bg-emerald-50/50 hover:bg-emerald-50",
   }
 
   return (
@@ -202,39 +219,62 @@ export default function Dashboard() {
       </div>
 
       {/* Resumen de Operaciones (KPIs) */}
-      <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
-        <Card className="bg-amber-50 border-amber-200 py-2 md:py-6 px-2 md:px-6">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
-            <CardTitle className="text-[10px] md:text-sm font-medium text-amber-700">Pendientes</CardTitle>
-            <Clock className="h-3 w-3 md:h-5 md:w-5 text-amber-600" />
-          </CardHeader>
-          <CardContent className="p-0 pt-1">
-            <div className="text-lg md:text-3xl font-bold text-amber-700">{pendientes}</div>
-            <p className="text-[9px] md:text-xs text-amber-600 mt-0.5 md:mt-1 hidden md:block">Pendiente + En Taller</p>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
+          <Card 
+            className={`bg-amber-50 border-amber-200 py-2 md:py-6 px-2 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pendientes' ? 'ring-2 ring-amber-500' : ''}`}
+            onClick={() => setStatusFilter('pendientes')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
+              <CardTitle className="text-[10px] md:text-sm font-medium text-amber-700">Pendientes</CardTitle>
+              <Clock className="h-3 w-3 md:h-5 md:w-5 text-amber-600" />
+            </CardHeader>
+            <CardContent className="p-0 pt-1">
+              <div className="text-lg md:text-3xl font-bold text-amber-700">{pendientes}</div>
+              <p className="text-[9px] md:text-xs text-amber-600 mt-0.5 md:mt-1 hidden md:block">Pendiente + En Taller</p>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-purple-50 border-purple-200 py-2 md:py-6 px-2 md:px-6">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
-            <CardTitle className="text-[10px] md:text-sm font-medium text-purple-700">En Ruta</CardTitle>
-            <Truck className="h-3 w-3 md:h-5 md:w-5 text-purple-600" />
-          </CardHeader>
-          <CardContent className="p-0 pt-1">
-            <div className="text-lg md:text-3xl font-bold text-purple-700">{enRuta}</div>
-            <p className="text-[9px] md:text-xs text-purple-600 mt-0.5 md:mt-1 hidden md:block">En camino</p>
-          </CardContent>
-        </Card>
+          <Card 
+            className={`bg-purple-50 border-purple-200 py-2 md:py-6 px-2 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'en_ruta' ? 'ring-2 ring-purple-500' : ''}`}
+            onClick={() => setStatusFilter('en_ruta')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
+              <CardTitle className="text-[10px] md:text-sm font-medium text-purple-700">En Ruta</CardTitle>
+              <Truck className="h-3 w-3 md:h-5 md:w-5 text-purple-600" />
+            </CardHeader>
+            <CardContent className="p-0 pt-1">
+              <div className="text-lg md:text-3xl font-bold text-purple-700">{enRuta}</div>
+              <p className="text-[9px] md:text-xs text-purple-600 mt-0.5 md:mt-1 hidden md:block">En camino</p>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-emerald-50 border-emerald-200 py-2 md:py-6 px-2 md:px-6">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
-            <CardTitle className="text-[10px] md:text-sm font-medium text-emerald-700">Entregados</CardTitle>
-            <CheckCircle className="h-3 w-3 md:h-5 md:w-5 text-emerald-600" />
-          </CardHeader>
-          <CardContent className="p-0 pt-1">
-            <div className="text-lg md:text-3xl font-bold text-emerald-700">{entregados}</div>
-            <p className="text-[9px] md:text-xs text-emerald-600 mt-0.5 md:mt-1 hidden md:block">Entregado</p>
-          </CardContent>
-        </Card>
+          <Card 
+            className={`bg-emerald-50 border-emerald-200 py-2 md:py-6 px-2 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'entregados' ? 'ring-2 ring-emerald-500' : ''}`}
+            onClick={() => setStatusFilter('entregados')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
+              <CardTitle className="text-[10px] md:text-sm font-medium text-emerald-700">Entregados</CardTitle>
+              <CheckCircle className="h-3 w-3 md:h-5 md:w-5 text-emerald-600" />
+            </CardHeader>
+            <CardContent className="p-0 pt-1">
+              <div className="text-lg md:text-3xl font-bold text-emerald-700">{entregados}</div>
+              <p className="text-[9px] md:text-xs text-emerald-600 mt-0.5 md:mt-1 hidden md:block">Entregado</p>
+            </CardContent>
+          </Card>
+        </div>
+        {statusFilter !== 'todos' && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStatusFilter('todos')}
+              className="text-xs"
+            >
+              Mostrar Todos
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="border rounded-xl bg-white shadow-sm overflow-hidden w-full">
@@ -258,225 +298,251 @@ export default function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id} className="border-b last:border-0">
-                  <TableCell className="text-xs">
-                    <div className="font-bold text-slate-700">{order.delivery_date}</div>
-                    <div className="text-[10px] text-slate-400 font-medium uppercase">{order.delivery_time}</div>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <div className="font-semibold text-slate-900 capitalize">{order.recipient_name}</div>
-                    <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                      <MapPin size={10} className="text-rose-400 shrink-0"/> 
-                      <span className="truncate">{order.recipient_address.substring(0, 20)}...</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-mono bg-slate-50 text-[10px] md:text-xs">{order.product_code}</Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <select 
-                      className={`text-[10px] md:text-[11px] font-bold rounded-full px-2 md:px-3 py-1 border-none focus:ring-2 focus:ring-rose-500 cursor-pointer ${statusStyles[order.status]}`}
-                      value={order.status}
-                      onChange={(e) => updateStatus(order.id!, e.target.value as OrderStatus)}
+              {filteredOrders.map((order) => (
+                <Dialog key={order.id}>
+                  <DialogTrigger asChild>
+                    <TableRow 
+                      className={`border-b last:border-0 ${rowBgStyles[order.status] || ''} cursor-pointer [&>td:has(button)]:cursor-default [&>td:has(select)]:cursor-default`}
+                      onClick={(e) => {
+                        // No abrir dialog si se hace clic en botones o inputs
+                        const target = e.target as HTMLElement
+                        if (target.closest('button') || target.closest('select') || target.closest('a')) {
+                          e.stopPropagation()
+                          return
+                        }
+                      }}
                     >
-                      <option value="pendiente">Pendiente</option>
-                      <option value="en_preparacion">En Taller</option>
-                      <option value="en_camino">En Camino</option>
-                      <option value="entregado">Entregado</option>
-                    </select>
-                  </TableCell>
-                  <TableCell className="text-center text-xs">
-                    {order.delivery_photo_url ? (
-                      <Dialog>
-                        <DialogTrigger asChild>
+                      <TableCell className="text-xs">
+                        <div className="font-bold text-slate-700">{order.delivery_date}</div>
+                        <div className="text-[10px] text-slate-400 font-medium uppercase">{order.delivery_time}</div>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="font-semibold text-slate-900 capitalize">{order.recipient_name}</div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <MapPin size={10} className="text-rose-400 shrink-0"/> 
+                          <span className="truncate">{order.recipient_address.substring(0, 20)}...</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="font-mono bg-slate-50 text-[10px] md:text-xs">{order.product_code}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <select 
+                          className={`text-[10px] md:text-[11px] font-bold rounded-full px-2 md:px-3 py-1 border-none focus:ring-2 focus:ring-rose-500 cursor-pointer ${statusStyles[order.status]}`}
+                          value={order.status}
+                          onChange={(e) => updateStatus(order.id!, e.target.value as OrderStatus)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value="pendiente">Pendiente</option>
+                          <option value="en_camino">En Camino</option>
+                          <option value="entregado">Entregado</option>
+                        </select>
+                      </TableCell>
+                      <TableCell className="text-center text-xs">
+                        {order.delivery_photo_url ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 md:h-8 md:w-8 text-slate-600 hover:bg-slate-50 shrink-0"
+                                title="Ver evidencia"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <ImageIcon size={14} className="md:w-4 md:h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-sm md:max-w-lg bg-white">
+                              <DialogHeader>
+                                <DialogTitle className="text-slate-800">Evidencia de entrega</DialogTitle>
+                                <DialogDescription>
+                                  Foto registrada para este pedido.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="mt-2 relative">
+                                <img
+                                  src={order.delivery_photo_url}
+                                  alt="Evidencia de entrega"
+                                  className="w-full h-auto rounded-md border border-slate-200"
+                                />
+                                <div className="mt-3 flex justify-end">
+                                  <Button
+                                    onClick={() => {
+                                      const phoneNumber = order.client_phone.replace(/\D/g, '')
+                                      const message = encodeURIComponent(
+                                        `¡Hola! Tu pedido ha sido entregado. Aquí puedes ver la foto: ${order.delivery_photo_url}`
+                                      )
+                                      window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
+                                    }}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                                    size="sm"
+                                  >
+                                    <MessageCircle size={16} />
+                                    Enviar foto al cliente
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 md:h-8 md:w-8 text-amber-600 hover:bg-amber-50 shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEvidenceUploadClick(order.id!)
+                            }}
+                            disabled={evidenceUploading && evidenceOrderId === order.id}
+                            title="Subir evidencia"
+                          >
+                            {evidenceUploading && evidenceOrderId === order.id ? (
+                              <Loader2 className="h-3 w-3 md:w-4 md:h-4 animate-spin" />
+                            ) : (
+                              <Upload size={14} className="md:w-4 md:h-4" />
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1.5 md:gap-1 items-center">
+                          {/* BOTÓN COPIAR GPS o Indicador sin ubicación */}
+                          {order.gps_url ? (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-7 w-7 md:h-8 md:w-8 text-blue-500 hover:bg-blue-50 shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                copyToClipboard(order.gps_url!)
+                              }}
+                              title="Copiar Link GPS"
+                            >
+                              <Copy size={14} className="md:w-4 md:h-4" />
+                            </Button>
+                          ) : (
+                            <div className="flex items-center gap-1 text-slate-400 text-[10px] md:text-xs shrink-0">
+                              <MapPinOff size={14} className="md:w-4 md:h-4" />
+                              <span className="hidden sm:inline">Sin ubicación</span>
+                            </div>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 md:h-8 md:w-8 text-emerald-600 hover:bg-emerald-50 shrink-0"
+                            asChild
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`} target="_blank">
+                              <Phone size={14} className="md:w-[18px] md:h-[18px]" />
+                            </a>
+                          </Button>
+
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 md:h-8 md:w-8 text-slate-600 hover:bg-slate-50 shrink-0"
-                            title="Ver evidencia"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/editar-pedido/${order.id}`)
+                            }}
+                            title="Editar pedido"
                           >
-                            <ImageIcon size={14} className="md:w-4 md:h-4" />
+                            <Pencil size={14} className="md:w-4 md:h-4" />
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-sm md:max-w-lg bg-white">
-                          <DialogHeader>
-                            <DialogTitle className="text-slate-800">Evidencia de entrega</DialogTitle>
-                            <DialogDescription>
-                              Foto registrada para este pedido.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="mt-2 relative">
-                            <img
-                              src={order.delivery_photo_url}
-                              alt="Evidencia de entrega"
-                              className="w-full h-auto rounded-md border border-slate-200"
-                            />
-                            <div className="mt-3 flex justify-end">
+
+                          <Dialog>
+                            <DialogTrigger asChild>
                               <Button
-                                onClick={() => {
-                                  const phoneNumber = order.client_phone.replace(/\D/g, '')
-                                  const message = encodeURIComponent(
-                                    `¡Hola! Tu pedido ha sido entregado. Aquí puedes ver la foto: ${order.delivery_photo_url}`
-                                  )
-                                  window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
-                                }}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                                size="sm"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 md:h-8 md:w-8 text-red-600 hover:bg-red-50 shrink-0"
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <MessageCircle size={16} />
-                                Enviar foto al cliente
+                                <Trash2 size={14} className="md:w-4 md:h-4" />
                               </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 md:h-8 md:w-8 text-amber-600 hover:bg-amber-50 shrink-0"
-                        onClick={() => handleEvidenceUploadClick(order.id!)}
-                        disabled={evidenceUploading && evidenceOrderId === order.id}
-                        title="Subir evidencia"
-                      >
-                        {evidenceUploading && evidenceOrderId === order.id ? (
-                          <Loader2 className="h-3 w-3 md:w-4 md:h-4 animate-spin" />
-                        ) : (
-                          <Upload size={14} className="md:w-4 md:h-4" />
-                        )}
-                      </Button>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1.5 md:gap-1 items-center">
-                      {/* BOTÓN COPIAR GPS o Indicador sin ubicación */}
-                      {order.gps_url ? (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7 md:h-8 md:w-8 text-blue-500 hover:bg-blue-50 shrink-0"
-                          onClick={() => copyToClipboard(order.gps_url!)}
-                          title="Copiar Link GPS"
-                        >
-                          <Copy size={14} className="md:w-4 md:h-4" />
-                        </Button>
-                      ) : (
-                        <div className="flex items-center gap-1 text-slate-400 text-[10px] md:text-xs shrink-0">
-                          <MapPinOff size={14} className="md:w-4 md:h-4" />
-                          <span className="hidden sm:inline">Sin ubicación</span>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-sm bg-white">
+                              <DialogHeader>
+                                <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
+                                <DialogDescription>
+                                  ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter className="mt-2">
+                                <DialogClose asChild>
+                                  <Button variant="outline" className="w-full sm:w-auto">
+                                    Cancelar
+                                  </Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                  <Button
+                                    variant="destructive"
+                                    className="w-full sm:w-auto"
+                                    onClick={() => deleteOrder(order.id!)}
+                                  >
+                                    Eliminar
+                                  </Button>
+                                </DialogClose>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                         </div>
-                      )}
+                      </TableCell>
+                    </TableRow>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md bg-white">
+                    <DialogHeader>
+                      <DialogTitle className="text-rose-600 flex items-center gap-2">
+                        <Package /> Detalle de Entrega
+                      </DialogTitle>
+                      <DialogDescription>
+                        Información completa del pedido para el equipo de logística.
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 pt-4">
+                      <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
+                        <h4 className="text-[10px] font-bold uppercase text-rose-400 mb-1 tracking-widest">Contenido de la Tarjeta</h4>
+                        <p className="text-sm font-serif italic text-slate-800 leading-relaxed">
+                          "{order.dedication || 'Sin dedicatoria'}"
+                        </p>
+                      </div>
 
-                      {/* MODAL DETALLES */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-[10px] md:text-sm px-2 md:px-3 shrink-0">
-                            Imprimir
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md bg-white">
-                          <DialogHeader>
-                            <DialogTitle className="text-rose-600 flex items-center gap-2">
-                              <Package /> Detalle de Entrega
-                            </DialogTitle>
-                            {/* Esto arregla el warning de la consola */}
-                            <DialogDescription>
-                              Información completa del pedido para el equipo de logística.
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          <div className="space-y-4 pt-4">
-                            <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
-                              <h4 className="text-[10px] font-bold uppercase text-rose-400 mb-1 tracking-widest">Contenido de la Tarjeta</h4>
-                              <p className="text-sm font-serif italic text-slate-800 leading-relaxed">
-                                "{order.dedication || 'Sin dedicatoria'}"
-                              </p>
-                            </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-slate-50 rounded-lg">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Quien compra</h4>
+                          <p className="text-sm font-semibold">{order.client_name}</p>
+                          <p className="text-xs text-slate-500">{order.client_phone}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Producto</h4>
+                          <p className="text-sm font-semibold">{order.product_code}</p>
+                          <p className="text-xs text-slate-500">{order.extras || 'Sin extras'}</p>
+                        </div>
+                      </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Quien compra</h4>
-                                <p className="text-sm font-semibold">{order.client_name}</p>
-                                <p className="text-xs text-slate-500">{order.client_phone}</p>
-                              </div>
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Producto</h4>
-                                <p className="text-sm font-semibold">{order.product_code}</p>
-                                <p className="text-xs text-slate-500">{order.extras || 'Sin extras'}</p>
-                              </div>
-                            </div>
-
-                            <div className="border-t pt-4">
-                              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Notas del Taller</h4>
-                              <p className="text-xs text-slate-600 bg-amber-50 p-2 rounded border border-amber-100 italic">
-                                {order.observations || 'Sin observaciones'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 flex gap-2">
-                            <Button
-                              className="w-full bg-slate-900 hover:bg-black gap-2"
-                              onClick={() => window.open(`/imprimir/${order.id}`, "_blank")}
-                            >
-                              <Printer size={16} /> Generar Recibo de Entrega
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 md:h-8 md:w-8 text-emerald-600 hover:bg-emerald-50 shrink-0"
-                        asChild
-                      >
-                        <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`} target="_blank">
-                          <Phone size={14} className="md:w-[18px] md:h-[18px]" />
-                        </a>
-                      </Button>
-
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 md:h-8 md:w-8 text-red-600 hover:bg-red-50 shrink-0"
-                          >
-                            <Trash2 size={14} className="md:w-4 md:h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-sm bg-white">
-                          <DialogHeader>
-                            <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
-                            <DialogDescription>
-                              ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <DialogFooter className="mt-2">
-                            <DialogClose asChild>
-                              <Button variant="outline" className="w-full sm:w-auto">
-                                Cancelar
-                              </Button>
-                            </DialogClose>
-                            <DialogClose asChild>
-                              <Button
-                                variant="destructive"
-                                className="w-full sm:w-auto"
-                                onClick={() => deleteOrder(order.id!)}
-                              >
-                                Eliminar
-                              </Button>
-                            </DialogClose>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                      <div className="border-t pt-4">
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Notas del Taller</h4>
+                        <p className="text-xs text-slate-600 bg-amber-50 p-2 rounded border border-amber-100 italic">
+                          {order.observations || 'Sin observaciones'}
+                        </p>
+                      </div>
                     </div>
-                  </TableCell>
-                </TableRow>
+
+                    <div className="mt-4 flex gap-2">
+                      <Button
+                        className="w-full bg-slate-900 hover:bg-black gap-2"
+                        onClick={() => window.open(`/imprimir/${order.id}`, "_blank")}
+                      >
+                        <Printer size={16} /> Generar Recibo de Entrega
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               ))}
             </TableBody>
           </Table>

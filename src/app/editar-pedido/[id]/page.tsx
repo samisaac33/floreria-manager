@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -35,11 +35,11 @@ const orderSchema = z.object({
 
 type OrderFormValues = z.infer<typeof orderSchema>
 
-const STORAGE_KEY = "nuevo-pedido-draft"
-
-export default function NuevoPedido() {
+export default function EditarPedido() {
   const router = useRouter()
+  const { id } = useParams()
   const [loading, setLoading] = useState(false)
+  const [loadingOrder, setLoadingOrder] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
 
   const form = useForm<OrderFormValues>({
@@ -47,79 +47,94 @@ export default function NuevoPedido() {
     defaultValues: {}
   })
 
-  // Cargar datos desde localStorage al inicio
+  // Cargar datos del pedido desde Supabase al inicio
   useEffect(() => {
-    if (isInitialized) return
-    
-    try {
-      const savedData = localStorage.getItem(STORAGE_KEY)
-      if (savedData) {
-        const parsedData = JSON.parse(savedData)
-        // Rellenar el formulario con los datos guardados
-        Object.keys(parsedData).forEach((key) => {
-          form.setValue(key as keyof OrderFormValues, parsedData[key] || "")
-        })
-      }
-    } catch (error) {
-      console.error("Error al cargar datos desde localStorage:", error)
-    } finally {
-      setIsInitialized(true)
-    }
-  }, [form, isInitialized])
+    async function loadOrder() {
+      if (!id || typeof id !== 'string') return
+      
+      setLoadingOrder(true)
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", id)
+          .single()
 
-  // Auto-guardar en localStorage cada vez que cambien los valores del formulario
-  useEffect(() => {
-    if (!isInitialized) return
-
-    let timeoutId: NodeJS.Timeout
-
-    const subscription = form.watch((value) => {
-      // Debounce: esperar 500ms antes de guardar para evitar escrituras excesivas
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
-        } catch (error) {
-          console.error("Error al guardar en localStorage:", error)
+        if (error) {
+          console.error("Error al cargar el pedido:", error)
+          alert("Error al cargar el pedido: " + error.message)
+          router.push("/")
+          return
         }
-      }, 500)
-    })
 
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeoutId)
+        if (data) {
+          // Rellenar el formulario con los datos del pedido
+          form.reset({
+            recipient_name: data.recipient_name || "",
+            recipient_phone: data.recipient_phone || "",
+            recipient_address: data.recipient_address || "",
+            delivery_date: data.delivery_date || "",
+            delivery_time: data.delivery_time || "",
+            gps_url: data.gps_url || "",
+            delivery_notes: data.delivery_notes || "",
+            dedication: data.dedication || "",
+            client_name: data.client_name || "",
+            client_phone: data.client_phone || "",
+            client_tax_id: data.client_tax_id || "",
+            client_email: data.client_email || "",
+            product_code: data.product_code || "",
+            extras: data.extras || "",
+            observations: data.observations || "",
+          })
+        }
+      } catch (error) {
+        console.error("Error al cargar el pedido:", error)
+        alert("Error al cargar el pedido")
+        router.push("/")
+      } finally {
+        setLoadingOrder(false)
+        setIsInitialized(true)
+      }
     }
-  }, [form, isInitialized])
+
+    loadOrder()
+  }, [id, form, router])
 
   async function onSubmit(data: OrderFormValues) {
+    if (!id || typeof id !== 'string') return
+    
     setLoading(true)
     
-    // Asegurar que status tenga un valor por defecto
-    const orderData = {
-      ...data,
-      status: "pendiente" as const
-    }
-    
-    const { error } = await supabase.from("orders").insert([orderData])
+    const { error } = await supabase
+      .from("orders")
+      .update(data)
+      .eq("id", id)
 
     if (error) {
-      alert("Error al guardar: " + error.message)
+      alert("Error al actualizar: " + error.message)
       setLoading(false)
     } else {
-      // Limpiar localStorage solo después de guardar exitosamente
-      try {
-        localStorage.removeItem(STORAGE_KEY)
-      } catch (error) {
-        console.error("Error al limpiar localStorage:", error)
-      }
       router.push("/")
       router.refresh()
     }
   }
 
+  if (loadingOrder) {
+    return (
+      <div className="max-w-3xl mx-auto pb-10">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="animate-spin mx-auto mb-4 text-rose-600" size={32} />
+            <p className="text-slate-600">Cargando pedido...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-3xl mx-auto pb-10">
-      <h1 className="text-3xl font-bold mb-6 text-slate-800">Nuevo Pedido</h1>
+      <h1 className="text-3xl font-bold mb-6 text-slate-800">Editar Pedido</h1>
       
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="destinatario" className="w-full">
@@ -255,7 +270,7 @@ export default function NuevoPedido() {
                 disabled={loading}
               >
                 {loading ? <Loader2 className="animate-spin" /> : <Save size={18} />}
-                Guardar Pedido
+                Actualizar Pedido
               </Button>
             </div>
           </TabsContent>
