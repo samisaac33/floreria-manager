@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Save, User, MapPin, Flower, X } from "lucide-react"
+import { Loader2, Save, User, MapPin, Flower, X, Zap } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 // Validación del Formulario con Zod - Todos los campos son opcionales
 const orderSchema = z.object({
@@ -42,6 +43,8 @@ export default function NuevoPedido() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [quickCaptureText, setQuickCaptureText] = useState("")
+  const [errorFields, setErrorFields] = useState<Set<string>>(new Set())
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema),
@@ -75,6 +78,14 @@ export default function NuevoPedido() {
     let timeoutId: NodeJS.Timeout
 
     const subscription = form.watch((value) => {
+      // Limpiar errores si los campos se llenan
+      if (errorFields.size > 0) {
+        const newErrors = new Set(errorFields)
+        if (value.recipient_phone) newErrors.delete("recipient_phone")
+        if (value.recipient_address) newErrors.delete("recipient_address")
+        setErrorFields(newErrors)
+      }
+
       // Debounce: esperar 500ms antes de guardar para evitar escrituras excesivas
       clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
@@ -90,7 +101,110 @@ export default function NuevoPedido() {
       subscription.unsubscribe()
       clearTimeout(timeoutId)
     }
-  }, [form, isInitialized])
+  }, [form, isInitialized, errorFields])
+
+  // Función para convertir fechas al formato YYYY-MM-DD
+  function convertDateToISO(dateStr: string): string {
+    if (!dateStr) return ""
+    
+    // Intentar diferentes formatos
+    // Formato: DD/MM/YY o DD/MM/YYYY
+    const ddmmyyMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)
+    if (ddmmyyMatch) {
+      const [, day, month, year] = ddmmyyMatch
+      const fullYear = year.length === 2 ? `20${year}` : year
+      return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
+    
+    // Formato: DD-MM-YY o DD-MM-YYYY
+    const ddmmyyMatch2 = dateStr.match(/(\d{1,2})-(\d{1,2})-(\d{2,4})/)
+    if (ddmmyyMatch2) {
+      const [, day, month, year] = ddmmyyMatch2
+      const fullYear = year.length === 2 ? `20${year}` : year
+      return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
+    
+    return dateStr
+  }
+
+  // Función de Smart Parsing
+  function parseQuickCapture() {
+    const text = quickCaptureText.toLowerCase()
+    const errors = new Set<string>()
+    const parsed: Partial<OrderFormValues> = {}
+
+    // Buscar destinatario y teléfono
+    const destinatarioMatch = text.match(/destinatario[:\s]+([^\n]+)/i)
+    if (destinatarioMatch) {
+      const destinatarioText = destinatarioMatch[1].trim()
+      // Intentar extraer nombre y teléfono
+      const phoneMatch = destinatarioText.match(/(\d{8,15})/)
+      if (phoneMatch) {
+        parsed.recipient_phone = phoneMatch[1]
+        parsed.recipient_name = destinatarioText.replace(phoneMatch[0], "").trim()
+      } else {
+        parsed.recipient_name = destinatarioText
+      }
+    }
+
+    // Buscar entrega (fecha y hora)
+    const entregaMatch = text.match(/entrega[:\s]+([^\n]+)/i)
+    if (entregaMatch) {
+      const entregaText = entregaMatch[1].trim()
+      // Buscar fecha
+      const dateMatch = entregaText.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/)
+      if (dateMatch) {
+        parsed.delivery_date = convertDateToISO(dateMatch[1])
+      }
+      // Buscar hora
+      const timeMatch = entregaText.match(/(\d{1,2}:\d{2}(?:\s*-\s*\d{1,2}:\d{2})?)/)
+      if (timeMatch) {
+        parsed.delivery_time = timeMatch[1]
+      } else {
+        // Intentar extraer cualquier texto que parezca hora
+        const timeText = entregaText.replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/, "").trim()
+        if (timeText) {
+          parsed.delivery_time = timeText
+        }
+      }
+    }
+
+    // Buscar dirección
+    const direccionMatch = text.match(/direcci[oó]n[:\s]+([^\n]+)/i)
+    if (direccionMatch) {
+      parsed.recipient_address = direccionMatch[1].trim()
+    }
+
+    // Buscar tarjeta/dedicatoria
+    const tarjetaMatch = text.match(/tarjeta[:\s]+([^\n]+(?:\n[^\n]+)*)/i)
+    if (tarjetaMatch) {
+      parsed.dedication = tarjetaMatch[1].trim()
+    }
+
+    // Verificar campos obligatorios
+    if (!parsed.recipient_phone) errors.add("recipient_phone")
+    if (!parsed.recipient_address) errors.add("recipient_address")
+
+    // Rellenar el formulario
+    Object.keys(parsed).forEach((key) => {
+      if (parsed[key as keyof OrderFormValues]) {
+        form.setValue(key as keyof OrderFormValues, parsed[key as keyof OrderFormValues] || "")
+      }
+    })
+
+    // Marcar campos con error
+    setErrorFields(errors)
+
+    // Mostrar mensaje
+    if (errors.size > 0) {
+      toast.warning("Plantilla procesada. Por favor, revisa los campos marcados en rojo.")
+    } else {
+      toast.success("Plantilla procesada correctamente.")
+    }
+
+    // Limpiar el texto de captura
+    setQuickCaptureText("")
+  }
 
   async function onSubmit(data: OrderFormValues) {
     setLoading(true)
@@ -133,27 +247,72 @@ export default function NuevoPedido() {
       <h1 className="text-3xl font-bold mb-6 text-slate-800 pr-10 md:pr-0">Nuevo Pedido</h1>
       
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Tabs defaultValue="destinatario" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+        <Tabs defaultValue="captura" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger 
+              value="captura" 
+              className="gap-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 data-[state=active]:border-b-2 text-xs md:text-sm"
+            >
+              <Zap size={14} className="md:w-4 md:h-4" /> Captura
+            </TabsTrigger>
             <TabsTrigger 
               value="destinatario" 
-              className="gap-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:border-b-2"
+              className="gap-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:border-b-2 text-xs md:text-sm"
             >
-              <MapPin size={16}/> Destinatario
+              <MapPin size={14} className="md:w-4 md:h-4" /> Destinatario
             </TabsTrigger>
             <TabsTrigger 
               value="cliente" 
-              className="gap-2 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:border-b-2"
+              className="gap-2 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:border-b-2 text-xs md:text-sm"
             >
-              <User size={16}/> Cliente
+              <User size={14} className="md:w-4 md:h-4" /> Cliente
             </TabsTrigger>
             <TabsTrigger 
               value="pedido" 
-              className="gap-2 data-[state=active]:border-rose-600 data-[state=active]:text-rose-600 data-[state=active]:border-b-2"
+              className="gap-2 data-[state=active]:border-rose-600 data-[state=active]:text-rose-600 data-[state=active]:border-b-2 text-xs md:text-sm"
             >
-              <Flower size={16}/> Pedido
+              <Flower size={14} className="md:w-4 md:h-4" /> Pedido
             </TabsTrigger>
           </TabsList>
+
+          {/* TAB 0: CAPTURA RÁPIDA */}
+          <TabsContent value="captura">
+            <Card>
+              <CardHeader>
+                <CardTitle>🚀 Captura Rápida</CardTitle>
+                <CardDescription>Pega la plantilla de WhatsApp y analiza automáticamente los datos</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Plantilla de WhatsApp</Label>
+                  <Textarea
+                    value={quickCaptureText}
+                    onChange={(e) => setQuickCaptureText(e.target.value)}
+                    placeholder="Pega aquí el mensaje de WhatsApp...&#10;&#10;Ejemplo:&#10;Destinatario: Maria Garcia 0991234567&#10;Entrega: 04/02/26 14:00 - 16:00&#10;Dirección: Av. Principal 123, esquina Calle Secundaria&#10;Tarjeta: Feliz cumpleaños, te queremos mucho!"
+                    className="min-h-[200px] font-mono text-sm"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={parseQuickCapture}
+                  className="w-full bg-purple-600 hover:bg-purple-700 gap-2"
+                  disabled={!quickCaptureText.trim()}
+                >
+                  <Zap size={18} />
+                  Analizar y Rellenar
+                </Button>
+                <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg">
+                  <p className="font-semibold mb-1">Formato esperado:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li><strong>Destinatario:</strong> Nombre y teléfono</li>
+                    <li><strong>Entrega:</strong> Fecha (DD/MM/YY) y hora</li>
+                    <li><strong>Dirección:</strong> Dirección completa</li>
+                    <li><strong>Tarjeta:</strong> Mensaje de dedicatoria</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* TAB 1: DESTINATARIO */}
           <TabsContent value="destinatario">
@@ -170,12 +329,22 @@ export default function NuevoPedido() {
                   </div>
                   <div className="space-y-2">
                     <Label>Teléfono</Label>
-                    <Input {...form.register("recipient_phone")} type="tel" inputMode="decimal" placeholder="0999999999" />
+                    <Input 
+                      {...form.register("recipient_phone")} 
+                      type="tel" 
+                      inputMode="decimal" 
+                      placeholder="0999999999"
+                      className={errorFields.has("recipient_phone") ? "border-red-500 bg-red-50" : ""}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Dirección Completa</Label>
-                  <Input {...form.register("recipient_address")} placeholder="Calle, número e intersección" />
+                  <Input 
+                    {...form.register("recipient_address")} 
+                    placeholder="Calle, número e intersección"
+                    className={errorFields.has("recipient_address") ? "border-red-500 bg-red-50" : ""}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
