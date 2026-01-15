@@ -224,29 +224,53 @@ export default function NuevoPedido() {
 
     // Bloque 3: Dirección
     if (blocks.length > 3 && blocks[3]) {
-      let block3Content = blocks[3].trim()
+      const block3Content = blocks[3].trim()
       
-      // Ignorar por completo la etiqueta "Dirección exacta de envío..."
-      block3Content = block3Content.replace(/direcci[óo]n\s+exacta\s+de\s+env[íi]o[^\n]*/i, "").trim()
+      // Buscar la posición del primer símbolo de dos puntos (:)
+      const colonIndex = block3Content.indexOf(":")
       
-      // Toma todo el contenido restante del bloque
-      // Si hay un link de Google Maps, sepáralo a gps_url
-      const gpsMatch = block3Content.match(/https?:\/\/(maps|goo\.gl|www\.google\.com\/maps)[^\s\n]+/i)
-      if (gpsMatch) {
-        form.setValue("gps_url", gpsMatch[0].trim())
-        // Eliminar el link del texto
-        block3Content = block3Content.replace(gpsMatch[0], "").trim()
+      if (colonIndex !== -1) {
+        // Extraer todo lo que esté después de la posición del dos puntos
+        let extractedText = block3Content.substring(colonIndex + 1).trim()
+        
+        // GPS Link: Si dentro de ese texto detectas un link de Google Maps
+        const gpsMatch = extractedText.match(/https?:\/\/(maps|goo\.gl|www\.google\.com\/maps)[^\s\n]+/i)
+        if (gpsMatch) {
+          form.setValue("gps_url", gpsMatch[0].trim())
+          // Eliminar el link del texto
+          extractedText = extractedText.replace(gpsMatch[0], "").trim()
+        } else {
+          form.setValue("gps_url", "")
+        }
+        
+        // El texto resultante (limpio de espacios y saltos de línea) asignarlo a recipient_address
+        const addressText = extractedText.replace(/\s+/g, " ").trim()
+        if (addressText) {
+          form.setValue("recipient_address", addressText)
+        } else {
+          errors.add("recipient_address")
+          form.setValue("recipient_address", "")
+        }
       } else {
-        form.setValue("gps_url", "")
-      }
-      
-      // El resto va íntegro a recipient_address
-      const addressText = block3Content.trim()
-      if (addressText) {
-        form.setValue("recipient_address", addressText)
-      } else {
-        errors.add("recipient_address")
-        form.setValue("recipient_address", "")
+        // Si no hay dos puntos, intentar procesar todo el bloque
+        let block3Text = block3Content.trim()
+        
+        // Buscar GPS link
+        const gpsMatch = block3Text.match(/https?:\/\/(maps|goo\.gl|www\.google\.com\/maps)[^\s\n]+/i)
+        if (gpsMatch) {
+          form.setValue("gps_url", gpsMatch[0].trim())
+          block3Text = block3Text.replace(gpsMatch[0], "").trim()
+        } else {
+          form.setValue("gps_url", "")
+        }
+        
+        const addressText = block3Text.replace(/\s+/g, " ").trim()
+        if (addressText) {
+          form.setValue("recipient_address", addressText)
+        } else {
+          errors.add("recipient_address")
+          form.setValue("recipient_address", "")
+        }
       }
     } else {
       errors.add("recipient_address")
