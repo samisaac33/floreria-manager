@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Save, User, MapPin, Flower } from "lucide-react"
+import { Loader2, Save, User, MapPin, Flower, X } from "lucide-react"
+import Link from "next/link"
 
 // Validación del Formulario con Zod - Todos los campos son opcionales
 const orderSchema = z.object({
@@ -118,8 +119,18 @@ export default function NuevoPedido() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-10">
-      <h1 className="text-3xl font-bold mb-6 text-slate-800">Nuevo Pedido</h1>
+    <div className="max-w-3xl mx-auto pb-10 relative px-4 md:px-0">
+      <Link href="/">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-0 right-0 md:right-4 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 h-8 w-8 md:h-10 md:w-10"
+          title="Cerrar"
+        >
+          <X size={18} className="md:w-5 md:h-5" />
+        </Button>
+      </Link>
+      <h1 className="text-3xl font-bold mb-6 text-slate-800 pr-10 md:pr-0">Nuevo Pedido</h1>
       
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="destinatario" className="w-full">
