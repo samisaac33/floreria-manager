@@ -17,7 +17,7 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2 } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -308,12 +308,28 @@ export default function Dashboard() {
                               Foto registrada para este pedido.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="mt-2">
+                          <div className="mt-2 relative">
                             <img
                               src={order.delivery_photo_url}
                               alt="Evidencia de entrega"
                               className="w-full h-auto rounded-md border border-slate-200"
                             />
+                            <div className="mt-3 flex justify-end">
+                              <Button
+                                onClick={() => {
+                                  const phoneNumber = order.client_phone.replace(/\D/g, '')
+                                  const message = encodeURIComponent(
+                                    `¡Hola! Tu pedido ha sido entregado. Aquí puedes ver la foto: ${order.delivery_photo_url}`
+                                  )
+                                  window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                                size="sm"
+                              >
+                                <MessageCircle size={16} />
+                                Enviar foto al cliente
+                              </Button>
+                            </div>
                           </div>
                         </DialogContent>
                       </Dialog>

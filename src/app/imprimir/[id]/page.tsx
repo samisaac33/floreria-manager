@@ -129,10 +129,10 @@ export default function ImprimirRecibo() {
 
         {/* Notas del Repartidor */}
         <div className="mb-2">
-          <h2 className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Notas</h2>
+          <h2 className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Notas para el Repartidor</h2>
           <div className="border-2 border-slate-900 p-1.5 bg-amber-50 min-h-[40px]">
             <p className="text-[9px] font-bold leading-snug">
-              {order.observations || "Sin instrucciones especiales."}
+              {order.delivery_notes || "Sin instrucciones especiales."}
             </p>
           </div>
         </div>

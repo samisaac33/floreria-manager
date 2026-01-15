@@ -8,6 +8,7 @@ export interface Order {
   delivery_date: string;
   delivery_time: string;
   gps_url?: string;
+  delivery_notes?: string;
   delivery_photo_url?: string;
   dedication?: string;
   client_name: string;

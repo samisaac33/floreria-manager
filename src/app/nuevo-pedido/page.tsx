@@ -22,6 +22,7 @@ const orderSchema = z.object({
   delivery_date: z.string().min(1, "Fecha requerida"),
   delivery_time: z.string().min(1, "Hora requerida"),
   gps_url: z.string().optional(),
+  delivery_notes: z.string().optional(),
   dedication: z.string().optional(),
   client_name: z.string().min(3, "Nombre del cliente requerido"),
   client_phone: z.string().min(7, "Teléfono del cliente requerido"),
@@ -40,9 +41,7 @@ export default function NuevoPedido() {
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema),
-    defaultValues: {
-      delivery_time: "Mañana (09:00 - 13:00)",
-    }
+    defaultValues: {}
   })
 
   async function onSubmit(data: OrderFormValues) {
@@ -65,9 +64,24 @@ export default function NuevoPedido() {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="destinatario" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger value="destinatario" className="gap-2"><MapPin size={16}/> Destinatario</TabsTrigger>
-            <TabsTrigger value="cliente" className="gap-2"><User size={16}/> Cliente</TabsTrigger>
-            <TabsTrigger value="pedido" className="gap-2"><Flower size={16}/> Pedido</TabsTrigger>
+            <TabsTrigger 
+              value="destinatario" 
+              className="gap-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:border-b-2"
+            >
+              <MapPin size={16}/> Destinatario
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cliente" 
+              className="gap-2 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:border-b-2"
+            >
+              <User size={16}/> Cliente
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pedido" 
+              className="gap-2 data-[state=active]:border-rose-600 data-[state=active]:text-rose-600 data-[state=active]:border-b-2"
+            >
+              <Flower size={16}/> Pedido
+            </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: DESTINATARIO */}
@@ -105,6 +119,10 @@ export default function NuevoPedido() {
                 <div className="space-y-2">
                   <Label>Link de Google Maps (GPS)</Label>
                   <Input {...form.register("gps_url")} placeholder="https://maps.google.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Observaciones para el repartidor</Label>
+                  <Textarea {...form.register("delivery_notes")} placeholder="Instrucciones especiales para la entrega..." />
                 </div>
               </CardContent>
             </Card>
@@ -163,8 +181,8 @@ export default function NuevoPedido() {
                   <Textarea {...form.register("dedication")} placeholder="Escribe el mensaje de la tarjeta aquí..." />
                 </div>
                 <div className="space-y-2">
-                  <Label>Observaciones Internas</Label>
-                  <Textarea {...form.register("observations")} placeholder="Notas para el taller o el repartidor..." />
+                  <Label>Notas para el Taller</Label>
+                  <Textarea {...form.register("observations")} placeholder="Notas internas para el taller..." />
                 </div>
               </CardContent>
             </Card>
