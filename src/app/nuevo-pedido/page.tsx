@@ -81,8 +81,9 @@ export default function NuevoPedido() {
       // Limpiar errores si los campos se llenan
       if (errorFields.size > 0) {
         const newErrors = new Set(errorFields)
-        if (value.recipient_phone) newErrors.delete("recipient_phone")
-        if (value.recipient_address) newErrors.delete("recipient_address")
+        if (value.recipient_phone && value.recipient_phone.trim() !== "") newErrors.delete("recipient_phone")
+        if (value.recipient_address && value.recipient_address.trim() !== "") newErrors.delete("recipient_address")
+        if (value.delivery_date && value.delivery_date.trim() !== "") newErrors.delete("delivery_date")
         setErrorFields(newErrors)
       }
 
@@ -103,9 +104,24 @@ export default function NuevoPedido() {
     }
   }, [form, isInitialized, errorFields])
 
+  // Función para limpiar etiquetas y emojis
+  function cleanText(text: string): string {
+    if (!text) return ""
+    // Eliminar emojis y números con puntos (1️⃣, 2️⃣, etc.)
+    return text
+      .replace(/[\d]️⃣/g, "") // Emojis numéricos
+      .replace(/^\d+[\.\)]\s*/gm, "") // Números con punto o paréntesis al inicio de línea
+      .replace(/^[^\w]*/gm, "") // Cualquier carácter no alfanumérico al inicio
+      .replace(/\s+/g, " ") // Múltiples espacios a uno solo
+      .trim()
+  }
+
   // Función para convertir fechas al formato YYYY-MM-DD
   function convertDateToISO(dateStr: string): string {
     if (!dateStr) return ""
+    
+    // Limpiar el texto primero
+    dateStr = dateStr.trim()
     
     // Intentar diferentes formatos
     // Formato: DD/MM/YY o DD/MM/YYYY
@@ -127,68 +143,134 @@ export default function NuevoPedido() {
     return dateStr
   }
 
-  // Función de Smart Parsing
+  // Función de Smart Parsing mejorada
   function parseQuickCapture() {
-    const text = quickCaptureText.toLowerCase()
+    const originalText = quickCaptureText
+    const text = originalText.toLowerCase()
     const errors = new Set<string>()
     const parsed: Partial<OrderFormValues> = {}
 
-    // Buscar destinatario y teléfono
-    const destinatarioMatch = text.match(/destinatario[:\s]+([^\n]+)/i)
+    // Buscar destinatario y teléfono (mejorado)
+    const destinatarioMatch = originalText.match(/destinatario[:\s]+([^\n]+)/i)
     if (destinatarioMatch) {
-      const destinatarioText = destinatarioMatch[1].trim()
-      // Intentar extraer nombre y teléfono
-      const phoneMatch = destinatarioText.match(/(\d{8,15})/)
-      if (phoneMatch) {
-        parsed.recipient_phone = phoneMatch[1]
-        parsed.recipient_name = destinatarioText.replace(phoneMatch[0], "").trim()
-      } else {
-        parsed.recipient_name = destinatarioText
+      let destinatarioText = destinatarioMatch[1].trim()
+      destinatarioText = cleanText(destinatarioText)
+      
+      // Buscar patrones numéricos más específicos: +593, 09, 098, etc.
+      const phonePatterns = [
+        /(\+593\s?\d{8,9})/i, // Ecuador con código
+        /(0\d{9})/, // Ecuador sin código (09xxxxxxxx)
+        /(\d{8,15})/, // Cualquier número de 8-15 dígitos
+      ]
+      
+      let phoneFound = false
+      for (const pattern of phonePatterns) {
+        const phoneMatch = destinatarioText.match(pattern)
+        if (phoneMatch) {
+          parsed.recipient_phone = phoneMatch[1].replace(/\s/g, "") // Eliminar espacios
+          destinatarioText = destinatarioText.replace(phoneMatch[0], "").trim()
+          phoneFound = true
+          break
+        }
+      }
+      
+      // Lo que sobre es el nombre (ya limpio de etiquetas)
+      if (destinatarioText) {
+        parsed.recipient_name = cleanText(destinatarioText)
       }
     }
 
     // Buscar entrega (fecha y hora)
-    const entregaMatch = text.match(/entrega[:\s]+([^\n]+)/i)
+    const entregaMatch = originalText.match(/entrega[:\s]+([^\n]+)/i)
     if (entregaMatch) {
-      const entregaText = entregaMatch[1].trim()
-      // Buscar fecha
-      const dateMatch = entregaText.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/)
-      if (dateMatch) {
-        parsed.delivery_date = convertDateToISO(dateMatch[1])
+      let entregaText = entregaMatch[1].trim()
+      entregaText = cleanText(entregaText)
+      
+      // Buscar fecha (mejorado para capturar DD/MM/YYYY)
+      const datePatterns = [
+        /(\d{1,2}\/\d{1,2}\/\d{4})/, // DD/MM/YYYY
+        /(\d{1,2}\/\d{1,2}\/\d{2})/, // DD/MM/YY
+        /(\d{1,2}-\d{1,2}-\d{4})/, // DD-MM-YYYY
+        /(\d{1,2}-\d{1,2}-\d{2})/, // DD-MM-YY
+      ]
+      
+      for (const pattern of datePatterns) {
+        const dateMatch = entregaText.match(pattern)
+        if (dateMatch) {
+          parsed.delivery_date = convertDateToISO(dateMatch[1])
+          entregaText = entregaText.replace(dateMatch[0], "").trim()
+          break
+        }
       }
+      
       // Buscar hora
       const timeMatch = entregaText.match(/(\d{1,2}:\d{2}(?:\s*-\s*\d{1,2}:\d{2})?)/)
       if (timeMatch) {
         parsed.delivery_time = timeMatch[1]
       } else {
         // Intentar extraer cualquier texto que parezca hora
-        const timeText = entregaText.replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/, "").trim()
+        const timeText = entregaText.trim()
         if (timeText) {
           parsed.delivery_time = timeText
         }
       }
     }
 
-    // Buscar dirección
-    const direccionMatch = text.match(/direcci[oó]n[:\s]+([^\n]+)/i)
+    // Buscar dirección (mejorado para extraer GPS)
+    const direccionMatch = originalText.match(/direcci[oó]n[:\s]+([^\n]+(?:\n[^\n]+)*)/i)
     if (direccionMatch) {
-      parsed.recipient_address = direccionMatch[1].trim()
+      let direccionText = direccionMatch[1].trim()
+      
+      // Buscar links de Google Maps
+      const gpsPatterns = [
+        /(https?:\/\/maps\.google\.com\/[^\s\n]+)/i,
+        /(https?:\/\/goo\.gl\/[^\s\n]+)/i,
+        /(https?:\/\/www\.google\.com\/maps\/[^\s\n]+)/i,
+      ]
+      
+      for (const pattern of gpsPatterns) {
+        const gpsMatch = direccionText.match(pattern)
+        if (gpsMatch) {
+          parsed.gps_url = gpsMatch[1]
+          // Eliminar el link del texto de dirección
+          direccionText = direccionText.replace(gpsMatch[0], "").trim()
+          break
+        }
+      }
+      
+      // Limpiar etiquetas y asignar dirección
+      direccionText = cleanText(direccionText)
+      if (direccionText) {
+        parsed.recipient_address = direccionText
+      }
     }
 
     // Buscar tarjeta/dedicatoria
-    const tarjetaMatch = text.match(/tarjeta[:\s]+([^\n]+(?:\n[^\n]+)*)/i)
+    const tarjetaMatch = originalText.match(/tarjeta[:\s]+([^\n]+(?:\n[^\n]+)*)/i)
     if (tarjetaMatch) {
-      parsed.dedication = tarjetaMatch[1].trim()
+      let tarjetaText = tarjetaMatch[1].trim()
+      tarjetaText = cleanText(tarjetaText)
+      if (tarjetaText) {
+        parsed.dedication = tarjetaText
+      }
     }
 
     // Verificar campos obligatorios
-    if (!parsed.recipient_phone) errors.add("recipient_phone")
-    if (!parsed.recipient_address) errors.add("recipient_address")
+    if (!parsed.recipient_phone || parsed.recipient_phone.trim() === "") {
+      errors.add("recipient_phone")
+    }
+    if (!parsed.recipient_address || parsed.recipient_address.trim() === "") {
+      errors.add("recipient_address")
+    }
+    if (!parsed.delivery_date || parsed.delivery_date.trim() === "") {
+      errors.add("delivery_date")
+    }
 
     // Rellenar el formulario
     Object.keys(parsed).forEach((key) => {
-      if (parsed[key as keyof OrderFormValues]) {
-        form.setValue(key as keyof OrderFormValues, parsed[key as keyof OrderFormValues] || "")
+      const value = parsed[key as keyof OrderFormValues]
+      if (value && value.toString().trim() !== "") {
+        form.setValue(key as keyof OrderFormValues, value.toString().trim())
       }
     })
 
@@ -349,7 +431,11 @@ export default function NuevoPedido() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Fecha de Entrega</Label>
-                    <Input type="date" {...form.register("delivery_date")} />
+                    <Input 
+                      type="date" 
+                      {...form.register("delivery_date")}
+                      className={errorFields.has("delivery_date") ? "border-red-500 bg-red-50" : ""}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Rango Horario</Label>
