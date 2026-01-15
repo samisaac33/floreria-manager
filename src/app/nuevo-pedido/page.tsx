@@ -143,136 +143,106 @@ export default function NuevoPedido() {
     return dateStr
   }
 
-  // Función de Smart Parsing mejorada
+  // Función de Smart Parsing infalible basada en división por emojis
   function parseQuickCapture() {
     const originalText = quickCaptureText
-    const text = originalText.toLowerCase()
     const errors = new Set<string>()
-    const parsed: Partial<OrderFormValues> = {}
-
-    // Buscar destinatario y teléfono (mejorado)
-    const destinatarioMatch = originalText.match(/destinatario[:\s]+([^\n]+)/i)
-    if (destinatarioMatch) {
-      let destinatarioText = destinatarioMatch[1].trim()
-      destinatarioText = cleanText(destinatarioText)
+    
+    // Dividir el texto por emojis numéricos (1️⃣, 2️⃣, 3️⃣, 4️⃣)
+    const blocks = originalText.split(/[1-4]️⃣/)
+    
+    // Bloque 1: Destinatario (Nombre y número)
+    if (blocks.length > 1 && blocks[1]) {
+      let block1 = blocks[1].trim()
       
-      // Buscar patrones numéricos más específicos: +593, 09, 098, etc.
-      const phonePatterns = [
-        /(\+593\s?\d{8,9})/i, // Ecuador con código
-        /(0\d{9})/, // Ecuador sin código (09xxxxxxxx)
-        /(\d{8,15})/, // Cualquier número de 8-15 dígitos
-      ]
+      // Eliminar etiqueta "Nombre y número..." si existe
+      block1 = block1.replace(/nombre\s+y\s+n[úu]mero[^\n]*/i, "").trim()
       
-      let phoneFound = false
-      for (const pattern of phonePatterns) {
-        const phoneMatch = destinatarioText.match(pattern)
-        if (phoneMatch) {
-          parsed.recipient_phone = phoneMatch[1].replace(/\s/g, "") // Eliminar espacios
-          destinatarioText = destinatarioText.replace(phoneMatch[0], "").trim()
-          phoneFound = true
-          break
-        }
-      }
-      
-      // Lo que sobre es el nombre (ya limpio de etiquetas)
-      if (destinatarioText) {
-        parsed.recipient_name = cleanText(destinatarioText)
-      }
-    }
-
-    // Buscar entrega (fecha y hora)
-    const entregaMatch = originalText.match(/entrega[:\s]+([^\n]+)/i)
-    if (entregaMatch) {
-      let entregaText = entregaMatch[1].trim()
-      entregaText = cleanText(entregaText)
-      
-      // Buscar fecha (mejorado para capturar DD/MM/YYYY)
-      const datePatterns = [
-        /(\d{1,2}\/\d{1,2}\/\d{4})/, // DD/MM/YYYY
-        /(\d{1,2}\/\d{1,2}\/\d{2})/, // DD/MM/YY
-        /(\d{1,2}-\d{1,2}-\d{4})/, // DD-MM-YYYY
-        /(\d{1,2}-\d{1,2}-\d{2})/, // DD-MM-YY
-      ]
-      
-      for (const pattern of datePatterns) {
-        const dateMatch = entregaText.match(pattern)
-        if (dateMatch) {
-          parsed.delivery_date = convertDateToISO(dateMatch[1])
-          entregaText = entregaText.replace(dateMatch[0], "").trim()
-          break
-        }
-      }
-      
-      // Buscar hora
-      const timeMatch = entregaText.match(/(\d{1,2}:\d{2}(?:\s*-\s*\d{1,2}:\d{2})?)/)
-      if (timeMatch) {
-        parsed.delivery_time = timeMatch[1]
+      // Buscar teléfono con regex: (+?\d[\d\s-]{7,}\d)
+      const phoneMatch = block1.match(/(\+?\d[\d\s-]{7,}\d)/)
+      if (phoneMatch) {
+        const phone = phoneMatch[1].replace(/[\s-]/g, "").trim()
+        form.setValue("recipient_phone", phone)
+        // Eliminar el teléfono del texto
+        block1 = block1.replace(phoneMatch[0], "").trim()
       } else {
-        // Intentar extraer cualquier texto que parezca hora
-        const timeText = entregaText.trim()
-        if (timeText) {
-          parsed.delivery_time = timeText
+        errors.add("recipient_phone")
+      }
+      
+      // Extraer nombre: primera línea limpia después de eliminar teléfono
+      const nameLines = block1.split(/\n/).filter(line => line.trim() !== "")
+      if (nameLines.length > 0) {
+        const name = cleanText(nameLines[0])
+        if (name) {
+          form.setValue("recipient_name", name)
         }
       }
-    }
-
-    // Buscar dirección (mejorado para extraer GPS)
-    const direccionMatch = originalText.match(/direcci[oó]n[:\s]+([^\n]+(?:\n[^\n]+)*)/i)
-    if (direccionMatch) {
-      let direccionText = direccionMatch[1].trim()
-      
-      // Buscar links de Google Maps
-      const gpsPatterns = [
-        /(https?:\/\/maps\.google\.com\/[^\s\n]+)/i,
-        /(https?:\/\/goo\.gl\/[^\s\n]+)/i,
-        /(https?:\/\/www\.google\.com\/maps\/[^\s\n]+)/i,
-      ]
-      
-      for (const pattern of gpsPatterns) {
-        const gpsMatch = direccionText.match(pattern)
-        if (gpsMatch) {
-          parsed.gps_url = gpsMatch[1]
-          // Eliminar el link del texto de dirección
-          direccionText = direccionText.replace(gpsMatch[0], "").trim()
-          break
-        }
-      }
-      
-      // Limpiar etiquetas y asignar dirección
-      direccionText = cleanText(direccionText)
-      if (direccionText) {
-        parsed.recipient_address = direccionText
-      }
-    }
-
-    // Buscar tarjeta/dedicatoria
-    const tarjetaMatch = originalText.match(/tarjeta[:\s]+([^\n]+(?:\n[^\n]+)*)/i)
-    if (tarjetaMatch) {
-      let tarjetaText = tarjetaMatch[1].trim()
-      tarjetaText = cleanText(tarjetaText)
-      if (tarjetaText) {
-        parsed.dedication = tarjetaText
-      }
-    }
-
-    // Verificar campos obligatorios
-    if (!parsed.recipient_phone || parsed.recipient_phone.trim() === "") {
+    } else {
       errors.add("recipient_phone")
     }
-    if (!parsed.recipient_address || parsed.recipient_address.trim() === "") {
-      errors.add("recipient_address")
-    }
-    if (!parsed.delivery_date || parsed.delivery_date.trim() === "") {
+
+    // Bloque 2: Fecha/Hora
+    if (blocks.length > 2 && blocks[2]) {
+      let block2 = blocks[2].trim()
+      
+      // Buscar fecha en formato DD/MM/YYYY o DD/MM/YY
+      const dateMatch = block2.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/)
+      if (dateMatch) {
+        const dateISO = convertDateToISO(dateMatch[1])
+        form.setValue("delivery_date", dateISO)
+        // Eliminar la fecha del texto
+        block2 = block2.replace(dateMatch[0], "").trim()
+      } else {
+        errors.add("delivery_date")
+      }
+      
+      // El resto del texto es la hora
+      const timeText = cleanText(block2)
+      if (timeText) {
+        form.setValue("delivery_time", timeText)
+      }
+    } else {
       errors.add("delivery_date")
     }
 
-    // Rellenar el formulario
-    Object.keys(parsed).forEach((key) => {
-      const value = parsed[key as keyof OrderFormValues]
-      if (value && value.toString().trim() !== "") {
-        form.setValue(key as keyof OrderFormValues, value.toString().trim())
+    // Bloque 3: Dirección/GPS
+    if (blocks.length > 3 && blocks[3]) {
+      let block3 = blocks[3].trim()
+      
+      // Eliminar etiqueta "Dirección exacta..." si existe
+      block3 = block3.replace(/direcci[óo]n\s+exacta[^\n]*/i, "").trim()
+      
+      // Buscar links de Google Maps: https?://(maps|goo.gl|www.google.com/maps)[^\s]+
+      const gpsMatch = block3.match(/https?:\/\/(maps|goo\.gl|www\.google\.com\/maps)[^\s]+/i)
+      if (gpsMatch) {
+        form.setValue("gps_url", gpsMatch[0])
+        // Eliminar el link del texto
+        block3 = block3.replace(gpsMatch[0], "").trim()
       }
-    })
+      
+      // El texto restante es la dirección
+      const addressText = cleanText(block3)
+      if (addressText) {
+        form.setValue("recipient_address", addressText)
+      } else {
+        errors.add("recipient_address")
+      }
+    } else {
+      errors.add("recipient_address")
+    }
+
+    // Bloque 4: Dedicatoria
+    if (blocks.length > 4 && blocks[4]) {
+      let block4 = blocks[4].trim()
+      
+      // Eliminar etiqueta "Mensaje o dedicatoria..." si existe
+      block4 = block4.replace(/mensaje\s+o\s+dedicatoria[^\n]*/i, "").trim()
+      
+      const dedicationText = cleanText(block4)
+      if (dedicationText) {
+        form.setValue("dedication", dedicationText)
+      }
+    }
 
     // Marcar campos con error
     setErrorFields(errors)
