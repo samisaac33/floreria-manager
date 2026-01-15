@@ -175,10 +175,10 @@ export default function Dashboard() {
   }
 
   const rowBgStyles: Record<string, string> = {
-    pendiente: "bg-amber-50/50 hover:bg-amber-50",
-    en_preparacion: "bg-blue-50/50 hover:bg-blue-50",
-    en_camino: "bg-purple-50/50 hover:bg-purple-50",
-    entregado: "bg-emerald-50/50 hover:bg-emerald-50",
+    pendiente: "bg-amber-100 border-l-4 border-amber-500 hover:bg-amber-200",
+    en_preparacion: "bg-blue-100 border-l-4 border-blue-500 hover:bg-blue-200",
+    en_camino: "bg-purple-100 border-l-4 border-purple-500 hover:bg-purple-200",
+    entregado: "bg-emerald-100 border-l-4 border-emerald-500 hover:bg-emerald-200",
   }
 
   return (
@@ -319,19 +319,19 @@ export default function Dashboard() {
                       }}
                     >
                       <TableCell className="text-xs">
-                        <div className="font-bold text-slate-700">{order.delivery_date}</div>
-                        <div className="text-[10px] text-slate-400 font-medium uppercase">{order.delivery_time}</div>
+                        <div className="font-bold text-slate-900">{order.delivery_date}</div>
+                        <div className="text-[10px] text-slate-600 font-medium uppercase">{order.delivery_time}</div>
                       </TableCell>
                       <TableCell className="text-xs">
                         <div className="font-semibold text-slate-900 capitalize text-[10px] md:text-xs">{order.recipient_name}</div>
-                        <div className="text-[9px] md:text-[10px] text-slate-500 flex items-center gap-1">
+                        <div className="text-[9px] md:text-[10px] text-slate-700 flex items-center gap-1">
                           <MapPin size={10} className="text-rose-400 shrink-0"/> 
                           <span className="truncate">{order.recipient_address.substring(0, 20)}...</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono bg-slate-50 text-[9px] md:text-xs">{order.product_code}</Badge>
+                          <Badge variant="outline" className="font-mono bg-slate-50 text-slate-900 text-[9px] md:text-xs border-slate-300">{order.product_code}</Badge>
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">
