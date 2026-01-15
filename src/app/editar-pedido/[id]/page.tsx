@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, Save, User, MapPin, Flower, X } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 // Función helper para obtener la fecha de hoy en formato YYYY-MM-DD (hora local)
 function getTodayDate(): string {
@@ -119,6 +120,63 @@ export default function EditarPedido() {
     loadOrder()
   }, [id, form, router])
 
+  // Función para traducir nombres de campos a español
+  function getFieldName(fieldName: string): string {
+    const fieldNames: Record<string, string> = {
+      recipient_name: "Nombre del destinatario",
+      recipient_phone: "Teléfono del destinatario",
+      recipient_address: "Dirección de entrega",
+      delivery_date: "Fecha de entrega",
+      delivery_time: "Hora de entrega",
+      client_name: "Nombre del cliente",
+      client_phone: "Teléfono del cliente",
+      client_email: "Email del cliente",
+      product_code: "Código del producto",
+    }
+    return fieldNames[fieldName] || fieldName
+  }
+
+  // Función que se ejecuta cuando el formulario tiene errores de validación
+  function onInvalid(errors: any) {
+    const errorMessages: string[] = []
+    
+    // Recorrer todos los errores del formulario
+    Object.keys(errors).forEach((fieldName) => {
+      const error = errors[fieldName]
+      const fieldNameSpanish = getFieldName(fieldName)
+      
+      if (error) {
+        // Si es un objeto con mensaje
+        if (error.message) {
+          // Validación especial para fecha pasada
+          if (error.message.includes("anterior a hoy") || error.message.includes("no puede ser anterior")) {
+            errorMessages.push("La fecha de entrega no puede ser anterior a hoy")
+          } else {
+            errorMessages.push(`${fieldNameSpanish}: ${error.message}`)
+          }
+        } else if (typeof error === 'string') {
+          errorMessages.push(`${fieldNameSpanish}: ${error}`)
+        } else {
+          errorMessages.push(`Falta el campo: ${fieldNameSpanish}`)
+        }
+      }
+    })
+    
+    // Mostrar error con lista de problemas
+    if (errorMessages.length > 0) {
+      toast.error("No se puede actualizar el pedido. Por favor revisa:", {
+        description: errorMessages.join("\n"),
+        duration: 10000, // 10 segundos para dar tiempo a leer
+        action: {
+          label: "Cerrar",
+          onClick: () => {},
+        },
+      })
+    } else {
+      toast.error("No se puede actualizar el pedido. Por favor revisa los campos marcados.")
+    }
+  }
+
   async function onSubmit(data: OrderFormValues) {
     if (!id || typeof id !== 'string') return
     
@@ -165,7 +223,7 @@ export default function EditarPedido() {
       </Link>
       <h1 className="text-3xl font-bold mb-6 text-slate-800 pr-10 md:pr-0">Editar Pedido</h1>
       
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
         <Tabs defaultValue="destinatario" className="w-full">
           <div className="overflow-x-auto -mx-2 md:mx-0 mb-6 md:mb-8 scrollbar-hide">
             <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-3 md:w-full shadow-sm bg-white border border-slate-200 rounded-lg p-1 md:p-1.5">
