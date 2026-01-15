@@ -494,51 +494,54 @@ export default function Dashboard() {
                       </TableCell>
                     </TableRow>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md bg-white">
-                    <DialogHeader>
-                      <DialogTitle className="text-rose-600 flex items-center gap-2">
-                        <Package /> Detalle de Entrega
+                  <DialogContent className="max-w-md bg-white max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="sticky top-0 bg-white z-10 pb-2 border-b border-slate-200">
+                      <DialogTitle className="text-rose-600 flex items-center gap-2 text-base md:text-lg">
+                        <Package size={18} className="md:w-5 md:h-5" /> Detalle de Entrega
                       </DialogTitle>
-                      <DialogDescription>
+                      <DialogDescription className="text-xs md:text-sm">
                         Información completa del pedido para el equipo de logística.
                       </DialogDescription>
                     </DialogHeader>
                     
-                    <div className="space-y-4 pt-4">
-                      <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
-                        <h4 className="text-[10px] font-bold uppercase text-rose-400 mb-1 tracking-widest">Contenido de la Tarjeta</h4>
-                        <p className="text-sm font-serif italic text-slate-800 leading-relaxed">
+                    <div className="space-y-3 md:space-y-4 pt-3 md:pt-4 px-1">
+                      <div className="bg-rose-50 p-2 md:p-4 rounded-xl border border-rose-100 max-h-32 overflow-y-auto">
+                        <h4 className="text-[9px] md:text-[10px] font-bold uppercase text-rose-400 mb-1 md:mb-2 tracking-widest">Contenido de la Tarjeta</h4>
+                        <p className="text-xs md:text-sm font-serif italic text-slate-800 leading-relaxed">
                           "{order.dedication || 'Sin dedicatoria'}"
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-slate-50 rounded-lg">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Quien compra</h4>
-                          <p className="text-sm font-semibold">{order.client_name}</p>
-                          <p className="text-xs text-slate-500">{order.client_phone}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg">
+                          <h4 className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase mb-1">Quien compra</h4>
+                          <p className="text-xs md:text-sm font-semibold">{order.client_name}</p>
+                          <p className="text-[10px] md:text-xs text-slate-500">{order.client_phone}</p>
                         </div>
-                        <div className="p-3 bg-slate-50 rounded-lg">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Producto</h4>
-                          <p className="text-sm font-semibold">{order.product_code}</p>
-                          <p className="text-xs text-slate-500">{order.extras || 'Sin extras'}</p>
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg">
+                          <h4 className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase mb-1">Producto</h4>
+                          <p className="text-xs md:text-sm font-semibold">{order.product_code}</p>
+                          <p className="text-[10px] md:text-xs text-slate-500">{order.extras || 'Sin extras'}</p>
                         </div>
                       </div>
 
-                      <div className="border-t pt-4">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-1">Notas del Taller</h4>
-                        <p className="text-xs text-slate-600 bg-amber-50 p-2 rounded border border-amber-100 italic">
+                      <div className="border-t pt-2 md:pt-4">
+                        <h4 className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase mb-1">Notas del Taller</h4>
+                        <p className="text-[10px] md:text-xs text-slate-600 bg-amber-50 p-2 rounded border border-amber-100 italic">
                           {order.observations || 'Sin observaciones'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex gap-2">
+                    <div className="mt-3 md:mt-4 flex gap-2 sticky bottom-0 bg-white pt-2 border-t border-slate-200">
                       <Button
-                        className="w-full bg-slate-900 hover:bg-black gap-2"
-                        onClick={() => window.open(`/imprimir/${order.id}`, "_blank")}
+                        className="w-full bg-slate-900 hover:bg-black gap-2 text-xs md:text-sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.open(`/imprimir/${order.id}`, "_blank")
+                        }}
                       >
-                        <Printer size={16} /> Generar Recibo de Entrega
+                        <Printer size={14} className="md:w-4 md:h-4" /> Generar Recibo de Entrega
                       </Button>
                     </div>
                   </DialogContent>
