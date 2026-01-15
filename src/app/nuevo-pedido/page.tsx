@@ -18,11 +18,7 @@ import { toast } from "sonner"
 
 // Función helper para obtener la fecha de hoy en formato YYYY-MM-DD (hora local)
 function getTodayDate(): string {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return new Date().toLocaleDateString('sv-SE')
 }
 
 // Validación del Formulario con Zod - Todos los campos son opcionales
@@ -167,6 +163,28 @@ export default function NuevoPedido() {
     // Dividir el texto por emojis numéricos (1️⃣, 2️⃣, 3️⃣, 4️⃣)
     const blocks = originalText.split(/[1-4]️⃣/)
     
+    // Validar fecha ANTES de procesar cualquier campo
+    let extractedDate: string | null = null
+    if (blocks.length > 2 && blocks[2]) {
+      let block2Content = blocks[2].trim()
+      block2Content = block2Content.replace(/fecha\s+y\s+hora\s+de\s+entrega[:\s]*/i, "").trim()
+      
+      const dateMatch = block2Content.match(/(\d{1,2}\/\d{1,2}\/\d{4})/)
+      if (dateMatch) {
+        const [day, month, year] = dateMatch[1].split("/")
+        extractedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+        
+        // Validar que la fecha no sea anterior a hoy (comparar solo fechas, sin horas)
+        const today = getTodayDate()
+        if (extractedDate < today) {
+          toast.error("Fecha inválida", {
+            description: "La plantilla contiene una fecha pasada. Por favor, corrígela en WhatsApp antes de procesar."
+          })
+          return // Detener el proceso, no rellenar ningún campo
+        }
+      }
+    }
+    
     // Bloque 1: Destinatario
     if (blocks.length > 1 && blocks[1]) {
       const lines = blocks[1].split(/\n/).map(line => line.trim()).filter(line => line !== "")
@@ -204,25 +222,33 @@ export default function NuevoPedido() {
       form.setValue("recipient_name", "")
     }
 
-    // Bloque 2: Fecha/Hora
+    // Bloque 2: Fecha/Hora (usar la fecha ya extraída y validada)
     if (blocks.length > 2 && blocks[2]) {
       let block2Content = blocks[2].trim()
       
       // Eliminar texto "Fecha y hora de entrega:" si existe
       block2Content = block2Content.replace(/fecha\s+y\s+hora\s+de\s+entrega[:\s]*/i, "").trim()
       
-      // Buscar fecha en formato DD/MM/YYYY
-      const dateMatch = block2Content.match(/(\d{1,2}\/\d{1,2}\/\d{4})/)
-      if (dateMatch) {
-        // Convertir DD/MM/YYYY a YYYY-MM-DD
-        const [day, month, year] = dateMatch[1].split("/")
-        const dateISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-        form.setValue("delivery_date", dateISO)
-        // Eliminar la fecha del texto
-        block2Content = block2Content.replace(dateMatch[0], "").trim()
+      // Si ya extrajimos y validamos la fecha, usarla directamente
+      if (extractedDate) {
+        form.setValue("delivery_date", extractedDate)
+        // Eliminar la fecha del texto para extraer la hora
+        const dateMatch = block2Content.match(/(\d{1,2}\/\d{1,2}\/\d{4})/)
+        if (dateMatch) {
+          block2Content = block2Content.replace(dateMatch[0], "").trim()
+        }
       } else {
-        errors.add("delivery_date")
-        form.setValue("delivery_date", "")
+        // Si no se encontró fecha, buscar nuevamente
+        const dateMatch = block2Content.match(/(\d{1,2}\/\d{1,2}\/\d{4})/)
+        if (dateMatch) {
+          const [day, month, year] = dateMatch[1].split("/")
+          const dateISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+          form.setValue("delivery_date", dateISO)
+          block2Content = block2Content.replace(dateMatch[0], "").trim()
+        } else {
+          errors.add("delivery_date")
+          form.setValue("delivery_date", "")
+        }
       }
       
       // El resto de la línea (como "14h00") es la hora
