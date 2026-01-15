@@ -143,7 +143,7 @@ export default function NuevoPedido() {
     return dateStr
   }
 
-  // Función de Smart Parsing infalible basada en división por emojis
+  // Función de Smart Parsing línea por línea - Análisis preciso
   function parseQuickCapture() {
     const originalText = quickCaptureText
     const errors = new Set<string>()
@@ -151,97 +151,124 @@ export default function NuevoPedido() {
     // Dividir el texto por emojis numéricos (1️⃣, 2️⃣, 3️⃣, 4️⃣)
     const blocks = originalText.split(/[1-4]️⃣/)
     
-    // Bloque 1: Destinatario (Nombre y número)
+    // Bloque 1: Destinatario
     if (blocks.length > 1 && blocks[1]) {
-      let block1 = blocks[1].trim()
+      const lines = blocks[1].split(/\n/).map(line => line.trim()).filter(line => line !== "")
       
-      // Eliminar etiqueta "Nombre y número..." si existe
-      block1 = block1.replace(/nombre\s+y\s+n[úu]mero[^\n]*/i, "").trim()
+      // Eliminar la primera línea (etiqueta)
+      if (lines.length > 0) {
+        lines.shift()
+      }
+      
+      // Unir las líneas restantes
+      let block1Content = lines.join("\n").trim()
       
       // Buscar teléfono con regex: (+?\d[\d\s-]{7,}\d)
-      const phoneMatch = block1.match(/(\+?\d[\d\s-]{7,}\d)/)
+      const phoneMatch = block1Content.match(/(\+?\d[\d\s-]{7,}\d)/)
       if (phoneMatch) {
         const phone = phoneMatch[1].replace(/[\s-]/g, "").trim()
         form.setValue("recipient_phone", phone)
         // Eliminar el teléfono del texto
-        block1 = block1.replace(phoneMatch[0], "").trim()
+        block1Content = block1Content.replace(phoneMatch[0], "").trim()
       } else {
         errors.add("recipient_phone")
+        form.setValue("recipient_phone", "")
       }
       
-      // Extraer nombre: primera línea limpia después de eliminar teléfono
-      const nameLines = block1.split(/\n/).filter(line => line.trim() !== "")
-      if (nameLines.length > 0) {
-        const name = cleanText(nameLines[0])
-        if (name) {
-          form.setValue("recipient_name", name)
-        }
+      // Lo que quede (limpio de etiquetas y teléfono) es el nombre
+      const name = cleanText(block1Content).trim()
+      if (name) {
+        form.setValue("recipient_name", name)
+      } else {
+        form.setValue("recipient_name", "")
       }
     } else {
       errors.add("recipient_phone")
+      form.setValue("recipient_phone", "")
+      form.setValue("recipient_name", "")
     }
 
     // Bloque 2: Fecha/Hora
     if (blocks.length > 2 && blocks[2]) {
-      let block2 = blocks[2].trim()
+      let block2Content = blocks[2].trim()
       
-      // Buscar fecha en formato DD/MM/YYYY o DD/MM/YY
-      const dateMatch = block2.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/)
+      // Eliminar texto "Fecha y hora de entrega:" si existe
+      block2Content = block2Content.replace(/fecha\s+y\s+hora\s+de\s+entrega[:\s]*/i, "").trim()
+      
+      // Buscar fecha en formato DD/MM/YYYY
+      const dateMatch = block2Content.match(/(\d{1,2}\/\d{1,2}\/\d{4})/)
       if (dateMatch) {
-        const dateISO = convertDateToISO(dateMatch[1])
+        // Convertir DD/MM/YYYY a YYYY-MM-DD
+        const [day, month, year] = dateMatch[1].split("/")
+        const dateISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
         form.setValue("delivery_date", dateISO)
         // Eliminar la fecha del texto
-        block2 = block2.replace(dateMatch[0], "").trim()
+        block2Content = block2Content.replace(dateMatch[0], "").trim()
       } else {
         errors.add("delivery_date")
+        form.setValue("delivery_date", "")
       }
       
-      // El resto del texto es la hora
-      const timeText = cleanText(block2)
+      // El resto de la línea (como "14h00") es la hora
+      const timeText = block2Content.trim()
       if (timeText) {
         form.setValue("delivery_time", timeText)
+      } else {
+        form.setValue("delivery_time", "")
       }
     } else {
       errors.add("delivery_date")
+      form.setValue("delivery_date", "")
+      form.setValue("delivery_time", "")
     }
 
-    // Bloque 3: Dirección/GPS
+    // Bloque 3: Dirección
     if (blocks.length > 3 && blocks[3]) {
-      let block3 = blocks[3].trim()
+      let block3Content = blocks[3].trim()
       
-      // Eliminar etiqueta "Dirección exacta..." si existe
-      block3 = block3.replace(/direcci[óo]n\s+exacta[^\n]*/i, "").trim()
+      // Ignorar por completo la etiqueta "Dirección exacta de envío..."
+      block3Content = block3Content.replace(/direcci[óo]n\s+exacta\s+de\s+env[íi]o[^\n]*/i, "").trim()
       
-      // Buscar links de Google Maps: https?://(maps|goo.gl|www.google.com/maps)[^\s]+
-      const gpsMatch = block3.match(/https?:\/\/(maps|goo\.gl|www\.google\.com\/maps)[^\s]+/i)
+      // Toma todo el contenido restante del bloque
+      // Si hay un link de Google Maps, sepáralo a gps_url
+      const gpsMatch = block3Content.match(/https?:\/\/(maps|goo\.gl|www\.google\.com\/maps)[^\s\n]+/i)
       if (gpsMatch) {
-        form.setValue("gps_url", gpsMatch[0])
+        form.setValue("gps_url", gpsMatch[0].trim())
         // Eliminar el link del texto
-        block3 = block3.replace(gpsMatch[0], "").trim()
+        block3Content = block3Content.replace(gpsMatch[0], "").trim()
+      } else {
+        form.setValue("gps_url", "")
       }
       
-      // El texto restante es la dirección
-      const addressText = cleanText(block3)
+      // El resto va íntegro a recipient_address
+      const addressText = block3Content.trim()
       if (addressText) {
         form.setValue("recipient_address", addressText)
       } else {
         errors.add("recipient_address")
+        form.setValue("recipient_address", "")
       }
     } else {
       errors.add("recipient_address")
+      form.setValue("recipient_address", "")
+      form.setValue("gps_url", "")
     }
 
     // Bloque 4: Dedicatoria
     if (blocks.length > 4 && blocks[4]) {
-      let block4 = blocks[4].trim()
+      let block4Content = blocks[4].trim()
       
-      // Eliminar etiqueta "Mensaje o dedicatoria..." si existe
-      block4 = block4.replace(/mensaje\s+o\s+dedicatoria[^\n]*/i, "").trim()
+      // Toma todo el contenido después de "Mensaje o dedicatoria para la tarjeta:"
+      block4Content = block4Content.replace(/mensaje\s+o\s+dedicatoria\s+para\s+la\s+tarjeta[:\s]*/i, "").trim()
       
-      const dedicationText = cleanText(block4)
+      const dedicationText = block4Content.trim()
       if (dedicationText) {
         form.setValue("dedication", dedicationText)
+      } else {
+        form.setValue("dedication", "")
       }
+    } else {
+      form.setValue("dedication", "")
     }
 
     // Marcar campos con error
