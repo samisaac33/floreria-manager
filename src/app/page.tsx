@@ -17,7 +17,13 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -317,15 +323,15 @@ export default function Dashboard() {
                         <div className="text-[10px] text-slate-400 font-medium uppercase">{order.delivery_time}</div>
                       </TableCell>
                       <TableCell className="text-xs">
-                        <div className="font-semibold text-slate-900 capitalize">{order.recipient_name}</div>
-                        <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                        <div className="font-semibold text-slate-900 capitalize text-[10px] md:text-xs">{order.recipient_name}</div>
+                        <div className="text-[9px] md:text-[10px] text-slate-500 flex items-center gap-1">
                           <MapPin size={10} className="text-rose-400 shrink-0"/> 
                           <span className="truncate">{order.recipient_address.substring(0, 20)}...</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono bg-slate-50 text-[10px] md:text-xs">{order.product_code}</Badge>
+                          <Badge variant="outline" className="font-mono bg-slate-50 text-[9px] md:text-xs">{order.product_code}</Badge>
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">
@@ -407,51 +413,52 @@ export default function Dashboard() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1.5 md:gap-1 items-center">
+                        {/* Botones para Desktop */}
+                        <div className="hidden md:flex justify-end gap-1 items-center">
                           {/* BOTÓN COPIAR GPS o Indicador sin ubicación */}
                           {order.gps_url ? (
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-7 w-7 md:h-8 md:w-8 text-blue-500 hover:bg-blue-50 shrink-0"
+                              className="h-8 w-8 text-blue-500 hover:bg-blue-50 shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 copyToClipboard(order.gps_url!)
                               }}
                               title="Copiar Link GPS"
                             >
-                              <Copy size={14} className="md:w-4 md:h-4" />
+                              <Copy size={16} />
                             </Button>
                           ) : (
-                            <div className="flex items-center gap-1 text-slate-400 text-[10px] md:text-xs shrink-0">
-                              <MapPinOff size={14} className="md:w-4 md:h-4" />
-                              <span className="hidden sm:inline">Sin ubicación</span>
+                            <div className="flex items-center gap-1 text-slate-400 text-xs shrink-0">
+                              <MapPinOff size={16} />
+                              <span>Sin ubicación</span>
                             </div>
                           )}
 
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 md:h-8 md:w-8 text-emerald-600 hover:bg-emerald-50 shrink-0"
+                            className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 shrink-0"
                             asChild
                             onClick={(e) => e.stopPropagation()}
                           >
                             <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`} target="_blank">
-                              <Phone size={14} className="md:w-[18px] md:h-[18px]" />
+                              <Phone size={18} />
                             </a>
                           </Button>
 
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 md:h-8 md:w-8 text-slate-600 hover:bg-slate-50 shrink-0"
+                            className="h-8 w-8 text-slate-600 hover:bg-slate-50 shrink-0"
                             onClick={(e) => {
                               e.stopPropagation()
                               router.push(`/editar-pedido/${order.id}`)
                             }}
                             title="Editar pedido"
                           >
-                            <Pencil size={14} className="md:w-4 md:h-4" />
+                            <Pencil size={16} />
                           </Button>
 
                           <Dialog>
@@ -459,10 +466,10 @@ export default function Dashboard() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 md:h-8 md:w-8 text-red-600 hover:bg-red-50 shrink-0"
+                                className="h-8 w-8 text-red-600 hover:bg-red-50 shrink-0"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Trash2 size={14} className="md:w-4 md:h-4" />
+                                <Trash2 size={16} />
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-sm bg-white">
@@ -490,6 +497,90 @@ export default function Dashboard() {
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
+                        </div>
+
+                        {/* Menú de tres puntos para Mobile */}
+                        <div className="flex md:hidden justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-slate-600 hover:bg-slate-50 shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              {order.gps_url && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    copyToClipboard(order.gps_url!)
+                                  }}
+                                >
+                                  <Copy size={16} className="mr-2" />
+                                  Copiar GPS
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  window.open(`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`, "_blank")
+                                }}
+                              >
+                                <Phone size={16} className="mr-2" />
+                                WhatsApp
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/editar-pedido/${order.id}`)
+                                }}
+                              >
+                                <Pencil size={16} className="mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => {
+                                      e.preventDefault()
+                                    }}
+                                    className="text-red-600"
+                                  >
+                                    <Trash2 size={16} className="mr-2" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-sm bg-white">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
+                                    <DialogDescription>
+                                      ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <DialogFooter className="mt-2">
+                                    <DialogClose asChild>
+                                      <Button variant="outline" className="w-full sm:w-auto">
+                                        Cancelar
+                                      </Button>
+                                    </DialogClose>
+                                    <DialogClose asChild>
+                                      <Button
+                                        variant="destructive"
+                                        className="w-full sm:w-auto"
+                                        onClick={() => deleteOrder(order.id!)}
+                                      >
+                                        Eliminar
+                                      </Button>
+                                    </DialogClose>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -533,16 +624,48 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="mt-3 md:mt-4 flex gap-2 sticky bottom-0 bg-white pt-2 border-t border-slate-200">
-                      <Button
-                        className="w-full bg-slate-900 hover:bg-black gap-2 text-xs md:text-sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          window.open(`/imprimir/${order.id}`, "_blank")
-                        }}
-                      >
-                        <Printer size={14} className="md:w-4 md:h-4" /> Generar Recibo de Entrega
-                      </Button>
+                    {/* Acciones Rápidas */}
+                    <div className="mt-3 md:mt-4 border-t pt-3 md:pt-4">
+                      <h4 className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase mb-2 md:mb-3">Acciones Rápidas</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {order.gps_url && (
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2 text-xs md:text-sm h-10 md:h-11"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              copyToClipboard(order.gps_url!)
+                            }}
+                          >
+                            <Copy size={16} className="md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">Copiar GPS</span>
+                            <span className="sm:hidden">GPS</span>
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 text-xs md:text-sm h-10 md:h-11 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.open(`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`, "_blank")
+                          }}
+                        >
+                          <Phone size={16} className="md:w-4 md:h-4" />
+                          <span className="hidden sm:inline">WhatsApp</span>
+                          <span className="sm:hidden">WA</span>
+                        </Button>
+                        <Button
+                          className="w-full bg-slate-900 hover:bg-black gap-2 text-xs md:text-sm h-10 md:h-11 col-span-2 md:col-span-1"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.open(`/imprimir/${order.id}`, "_blank")
+                          }}
+                        >
+                          <Printer size={16} className="md:w-4 md:h-4" />
+                          <span className="hidden sm:inline">Imprimir</span>
+                          <span className="sm:hidden">Recibo</span>
+                        </Button>
+                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>

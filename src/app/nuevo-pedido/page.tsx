@@ -170,7 +170,7 @@ export default function NuevoPedido() {
                   </div>
                   <div className="space-y-2">
                     <Label>Teléfono</Label>
-                    <Input {...form.register("recipient_phone")} type="tel" inputMode="numeric" placeholder="0999999999" />
+                    <Input {...form.register("recipient_phone")} type="tel" inputMode="decimal" placeholder="0999999999" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -214,13 +214,13 @@ export default function NuevoPedido() {
                   </div>
                   <div className="space-y-2">
                     <Label>Teléfono</Label>
-                    <Input {...form.register("client_phone")} type="tel" inputMode="numeric" />
+                    <Input {...form.register("client_phone")} type="tel" inputMode="decimal" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Cédula / RUC (Opcional)</Label>
-                    <Input {...form.register("client_tax_id")} type="tel" inputMode="numeric" />
+                    <Input {...form.register("client_tax_id")} type="tel" inputMode="decimal" />
                   </div>
                   <div className="space-y-2">
                     <Label>Email</Label>
