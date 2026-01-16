@@ -488,7 +488,7 @@ export default function NuevoPedido() {
       } catch (error) {
         console.error("Error al limpiar localStorage:", error)
       }
-      router.push("/")
+      router.push("/dashboard")
       router.refresh()
     }
   }
@@ -498,7 +498,7 @@ export default function NuevoPedido() {
     return (
       <div className="min-h-screen bg-slate-50 p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          <Link href="/" className="absolute top-4 right-4 md:top-8 md:right-8">
+          <Link href="/dashboard" className="absolute top-4 right-4 md:top-8 md:right-8">
             <Button variant="ghost" size="icon" className="rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100">
               <X size={18} className="md:w-5 md:h-5" />
             </Button>
@@ -522,7 +522,7 @@ export default function NuevoPedido() {
   return (
     <div className="max-w-3xl mx-auto pb-10 relative px-2 md:px-4">
       <Link 
-        href="/"
+        href="/dashboard"
         onClick={() => {
           // Limpiar localStorage cuando el usuario cancela voluntariamente
           try {

@@ -35,34 +35,47 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const pathname = request.nextUrl.pathname
 
-  // Permitir acceso público a las rutas de entrega, ruta y landing page
-  if (
-    request.nextUrl.pathname.startsWith('/entregar/') || 
-    request.nextUrl.pathname.startsWith('/ruta/') ||
-    request.nextUrl.pathname === '/' ||
-    request.nextUrl.pathname === '/login'
-  ) {
-    return response
-  }
+  // Rutas públicas que no requieren autenticación
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/entregar',
+    '/ruta',
+  ]
 
-  // Si no hay usuario, redirigir a login
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+  // Verificar si la ruta es pública (exacta o que empiece con alguna ruta pública)
+  const isPublicRoute = 
+    pathname === '/' || 
+    pathname === '/login' ||
+    pathname.startsWith('/entregar/') || 
+    pathname.startsWith('/ruta/')
 
-  // Si el usuario está en login pero ya está autenticado, redirigir al dashboard
-  if (user && request.nextUrl.pathname === '/login') {
+  // Si el usuario está logueado e intenta acceder a rutas públicas, redirigir al dashboard
+  if (user && (pathname === '/' || pathname === '/login')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Si el usuario está en /configuracion, permitir el acceso (necesario para configurar)
-  if (request.nextUrl.pathname === '/configuracion') {
+  // Si es una ruta pública y no hay usuario, permitir el acceso
+  if (isPublicRoute && !user) {
+    return response
+  }
+
+  // Si no hay usuario y no es ruta pública, redirigir a login
+  if (!user && !isPublicRoute) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // A partir de aquí, el usuario está autenticado
+  
+  // Si está en /configuracion, permitir el acceso (necesario para configurar)
+  if (pathname === '/configuracion') {
     return response
   }
 
   // Para todas las demás rutas protegidas, verificar si tiene tienda configurada
-  if (user && request.nextUrl.pathname !== '/configuracion') {
+  if (user && pathname !== '/configuracion') {
     // Verificar si el usuario tiene una tienda
     const { data: store, error } = await supabase
       .from("stores")
@@ -71,7 +84,7 @@ export async function middleware(request: NextRequest) {
       .single()
 
     // Si no hay tienda y no está en /configuracion, redirigir a configuración
-    if ((error || !store) && request.nextUrl.pathname !== '/configuracion') {
+    if (error || !store) {
       return NextResponse.redirect(new URL('/configuracion', request.url))
     }
   }

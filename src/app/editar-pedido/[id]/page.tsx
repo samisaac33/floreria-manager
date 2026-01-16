@@ -84,7 +84,7 @@ export default function EditarPedido() {
         if (error) {
           console.error("Error al cargar el pedido:", error)
           alert("Error al cargar el pedido: " + error.message)
-          router.push("/")
+          router.push("/dashboard")
           return
         }
 
@@ -214,7 +214,7 @@ export default function EditarPedido() {
 
   return (
     <div className="max-w-3xl mx-auto pb-10 relative px-2 md:px-4">
-      <Link href="/">
+      <Link href="/dashboard">
         <Button
           variant="ghost"
           size="icon"
