@@ -225,28 +225,26 @@ export default function EditarPedido() {
       
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
         <Tabs defaultValue="destinatario" className="w-full">
-          <div className="overflow-x-auto -mx-2 md:mx-0 mb-6 md:mb-8 scrollbar-hide">
-            <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-3 md:w-full shadow-sm bg-white border border-slate-200 rounded-lg p-1 md:p-1.5">
-              <TabsTrigger 
-                value="destinatario" 
-                className="gap-1.5 md:gap-2 min-w-[120px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
-              >
-                <MapPin size={14} className="md:w-4 md:h-4 shrink-0" /> Destinatario
-              </TabsTrigger>
-              <TabsTrigger 
-                value="cliente" 
-                className="gap-1.5 md:gap-2 min-w-[120px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
-              >
-                <User size={14} className="md:w-4 md:h-4 shrink-0" /> Cliente
-              </TabsTrigger>
-              <TabsTrigger 
-                value="pedido" 
-                className="gap-1.5 md:gap-2 min-w-[120px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
-              >
-                <Flower size={14} className="md:w-4 md:h-4 shrink-0" /> Pedido
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="grid grid-cols-3 w-full shadow-sm bg-white border border-slate-200 rounded-lg p-1 md:p-1.5 h-auto mb-6 md:mb-8">
+            <TabsTrigger 
+              value="destinatario" 
+              className="gap-1 md:gap-2 px-2 md:px-4 py-2.5 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600 data-[state=active]:border-b-2 text-[10px] md:text-sm font-medium whitespace-nowrap"
+            >
+              <MapPin size={13} className="md:w-4 md:h-4 shrink-0" /> <span className="hidden sm:inline">Destinatario</span><span className="sm:hidden">Dest.</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cliente" 
+              className="gap-1 md:gap-2 px-2 md:px-4 py-2.5 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-600 data-[state=active]:border-b-2 text-[10px] md:text-sm font-medium whitespace-nowrap"
+            >
+              <User size={13} className="md:w-4 md:h-4 shrink-0" /> Cliente
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pedido" 
+              className="gap-1 md:gap-2 px-2 md:px-4 py-2.5 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600 data-[state=active]:border-b-2 text-[10px] md:text-sm font-medium whitespace-nowrap"
+            >
+              <Flower size={13} className="md:w-4 md:h-4 shrink-0" /> Pedido
+            </TabsTrigger>
+          </TabsList>
 
           {/* TAB 1: DESTINATARIO */}
           <TabsContent value="destinatario">

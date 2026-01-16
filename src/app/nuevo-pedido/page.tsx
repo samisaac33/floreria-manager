@@ -178,7 +178,7 @@ export default function NuevoPedido() {
         const today = getTodayDate()
         if (extractedDate < today) {
           toast.error("Fecha inválida", {
-            description: "La plantilla contiene una fecha pasada. Por favor, corrígela en WhatsApp antes de procesar."
+            description: "La captura contiene una fecha pasada. Por favor, corrígela antes de procesar."
           })
           return // Detener el proceso, no rellenar ningún campo
         }
@@ -460,49 +460,49 @@ export default function NuevoPedido() {
       
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
         <Tabs defaultValue="captura" className="w-full">
-          <div className="overflow-x-auto -mx-2 md:mx-0 mb-6 md:mb-8 scrollbar-hide">
-            <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-4 md:w-full shadow-sm bg-white border border-slate-200 rounded-lg p-1 md:p-1.5">
-              <TabsTrigger 
-                value="captura" 
-                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 data-[state=active]:border-slate-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
-              >
-                <Zap size={14} className="md:w-4 md:h-4 shrink-0" /> <span className="hidden sm:inline">Captura</span><span className="sm:hidden">Cap.</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="destinatario" 
-                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
-              >
-                <MapPin size={14} className="md:w-4 md:h-4 shrink-0" /> Destinatario
-              </TabsTrigger>
-              <TabsTrigger 
-                value="cliente" 
-                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
-              >
-                <User size={14} className="md:w-4 md:h-4 shrink-0" /> Cliente
-              </TabsTrigger>
-              <TabsTrigger 
-                value="pedido" 
-                className="gap-1.5 md:gap-2 min-w-[100px] md:min-w-0 px-3 md:px-4 py-3 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600 data-[state=active]:border-b-2 text-[11px] md:text-sm font-medium whitespace-nowrap shrink-0"
-              >
-                <Flower size={14} className="md:w-4 md:h-4 shrink-0" /> Pedido
-              </TabsTrigger>
+          <TabsList className="flex flex-wrap md:grid md:grid-cols-4 w-full shadow-sm bg-white border border-slate-200 rounded-lg p-1 md:p-1.5 h-auto mb-6 md:mb-8">
+            {/* Fila 1 en móvil: Captura al 100% del ancho */}
+            <TabsTrigger 
+              value="captura" 
+              className="w-full md:w-auto gap-1.5 md:gap-2 px-2.5 md:px-4 py-2.5 md:py-2 h-[44px] md:h-auto mb-2 md:mb-0 data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 data-[state=active]:border-slate-600 data-[state=active]:border-b-2 text-[10px] md:text-sm font-medium whitespace-nowrap"
+            >
+              <Zap size={13} className="md:w-4 md:h-4 shrink-0" /> <span>Captura</span>
+            </TabsTrigger>
+            {/* Fila 2 en móvil: Las otras 3 pestañas en 3 columnas */}
+            <TabsTrigger 
+              value="destinatario" 
+              className="flex-1 md:flex-none gap-1 md:gap-2 px-2 md:px-4 py-2.5 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-600 data-[state=active]:border-b-2 text-[10px] md:text-sm font-medium whitespace-nowrap"
+            >
+              <MapPin size={13} className="md:w-4 md:h-4 shrink-0" /> <span className="hidden sm:inline">Destinatario</span><span className="sm:hidden">Dest.</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cliente" 
+              className="flex-1 md:flex-none gap-1 md:gap-2 px-2 md:px-4 py-2.5 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-600 data-[state=active]:border-b-2 text-[10px] md:text-sm font-medium whitespace-nowrap"
+            >
+              <User size={13} className="md:w-4 md:h-4 shrink-0" /> Cliente
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pedido" 
+              className="flex-1 md:flex-none gap-1 md:gap-2 px-2 md:px-4 py-2.5 md:py-2 h-[44px] md:h-auto data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600 data-[state=active]:border-b-2 text-[10px] md:text-sm font-medium whitespace-nowrap"
+            >
+              <Flower size={13} className="md:w-4 md:h-4 shrink-0" /> Pedido
+            </TabsTrigger>
           </TabsList>
-          </div>
 
           {/* TAB 0: CAPTURA RÁPIDA */}
           <TabsContent value="captura">
             <Card>
               <CardHeader>
                 <CardTitle>🚀 Captura Rápida</CardTitle>
-                <CardDescription>Pega la plantilla de WhatsApp y analiza automáticamente los datos</CardDescription>
+                <CardDescription>Pega la captura de pedido y analiza automáticamente los datos</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Plantilla de WhatsApp</Label>
+                  <Label>Captura de Pedido</Label>
                   <Textarea
                     value={quickCaptureText}
                     onChange={(e) => setQuickCaptureText(e.target.value)}
-                    placeholder="Pega aquí el mensaje de WhatsApp...&#10;&#10;Ejemplo:&#10;Destinatario: Maria Garcia 0991234567&#10;Entrega: 04/02/26 14:00 - 16:00&#10;Dirección: Av. Principal 123, esquina Calle Secundaria&#10;Tarjeta: Feliz cumpleaños, te queremos mucho!"
+                    placeholder="Pega aquí la captura de pedido...&#10;&#10;Ejemplo:&#10;Destinatario: Maria Garcia 0991234567&#10;Entrega: 04/02/26 14:00 - 16:00&#10;Dirección: Av. Principal 123, esquina Calle Secundaria&#10;Tarjeta: Feliz cumpleaños, te queremos mucho!"
                     className="min-h-[200px] font-mono text-sm"
                   />
                 </div>

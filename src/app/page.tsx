@@ -596,9 +596,27 @@ export default function Dashboard() {
                     </DialogHeader>
                     
                     <div className="space-y-3 md:space-y-4 pt-3 md:pt-4 px-1">
-                      <div className="bg-rose-50 p-2 md:p-4 rounded-xl border border-rose-100 max-h-32 overflow-y-auto">
-                        <h4 className="text-[9px] md:text-[10px] font-bold uppercase text-rose-400 mb-1 md:mb-2 tracking-widest">Contenido de la Tarjeta</h4>
-                        <p className="text-xs md:text-sm font-serif italic text-slate-800 leading-relaxed">
+                      <div className="bg-rose-50 p-2 md:p-4 rounded-xl border border-rose-100 max-h-32 overflow-y-auto relative">
+                        <div className="flex items-start justify-between mb-1 md:mb-2">
+                          <h4 className="text-[9px] md:text-[10px] font-bold uppercase text-rose-400 tracking-widest">Contenido de la Tarjeta</h4>
+                          {order.dedication && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-100 shrink-0 absolute top-2 right-2"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const dedicationText = order.dedication || ""
+                                navigator.clipboard.writeText(dedicationText)
+                                toast.success("Mensaje copiado")
+                              }}
+                              title="Copiar dedicatoria"
+                            >
+                              <Copy size={12} className="md:w-3 md:h-3" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs md:text-sm font-serif italic text-slate-800 leading-relaxed pr-2">
                           "{order.dedication || 'Sin dedicatoria'}"
                         </p>
                       </div>
