@@ -2,6 +2,7 @@ export type OrderStatus = 'pendiente' | 'en_preparacion' | 'en_camino' | 'entreg
 
 export interface Order {
   id?: string;
+  store_id?: string;
   recipient_name: string;
   recipient_phone: string;
   recipient_address: string;

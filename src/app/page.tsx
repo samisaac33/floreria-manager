@@ -32,7 +32,7 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical, DollarSign, Receipt, FileText } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical, DollarSign, Receipt, FileText, Settings } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +45,7 @@ export default function Dashboard() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [storeName, setStoreName] = useState<string>("Logística Florería")
   const today = new Date()
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>(() => {
     const todayStr = formatLocalDate(today)
@@ -82,6 +83,32 @@ export default function Dashboard() {
   }
 
   useEffect(() => { fetchOrders() }, [dateRange])
+
+  // Obtener nombre de la tienda
+  useEffect(() => {
+    async function fetchStore() {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        
+        if (userError || !user) {
+          return
+        }
+
+        const { data, error } = await supabase
+          .from("stores")
+          .select("name")
+          .eq("owner_id", user.id)
+          .single()
+
+        if (!error && data?.name) {
+          setStoreName(data.name)
+        }
+      } catch (error) {
+        console.error("Error al cargar tienda:", error)
+      }
+    }
+    fetchStore()
+  }, [])
 
   async function updateStatus(id: string, newStatus: OrderStatus) {
     const { error } = await supabase
@@ -287,7 +314,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="bg-rose-600 p-2 rounded-lg text-white font-bold text-xl">F</div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">Logística Florería</h1>
+            <h1 className="text-xl md:text-2xl font-bold">{storeName}</h1>
             <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Panel de Control</p>
           </div>
         </div>
@@ -331,6 +358,11 @@ export default function Dashboard() {
             <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10 shrink-0" onClick={fetchOrders}>
               <RefreshCw size={16}/>
             </Button>
+            <Link href="/configuracion">
+              <Button variant="ghost" size="sm" className="text-xs md:text-sm shrink-0">
+                <Settings className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Configuración
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs md:text-sm shrink-0">
               <LogOut className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Salir
             </Button>

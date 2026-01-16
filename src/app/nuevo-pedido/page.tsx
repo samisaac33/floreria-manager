@@ -60,11 +60,55 @@ export default function NuevoPedido() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [quickCaptureText, setQuickCaptureText] = useState("")
   const [errorFields, setErrorFields] = useState<Set<string>>(new Set())
+  const [storeId, setStoreId] = useState<string | null>(null)
+  const [storeLoading, setStoreLoading] = useState(true)
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema) as any,
     defaultValues: {}
   })
+
+  // Obtener store_id del usuario
+  useEffect(() => {
+    async function fetchStore() {
+      setStoreLoading(true)
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        
+        if (userError || !user) {
+          toast.error("Error de autenticación", {
+            description: "Por favor, inicia sesión nuevamente."
+          })
+          router.push("/login")
+          return
+        }
+
+        // Buscar tienda del usuario
+        const { data, error } = await supabase
+          .from("stores")
+          .select("id")
+          .eq("owner_id", user.id)
+          .single()
+
+        if (error && error.code !== 'PGRST116') {
+          throw error
+        }
+
+        if (data) {
+          setStoreId(data.id)
+        } else {
+          // No hay tienda configurada
+          setStoreId(null)
+        }
+      } catch (error: any) {
+        console.error("Error al cargar tienda:", error)
+        setStoreId(null)
+      } finally {
+        setStoreLoading(false)
+      }
+    }
+    fetchStore()
+  }, [router])
 
   // Auto-load: Cargar datos desde localStorage al inicio
   useEffect(() => {
@@ -411,11 +455,24 @@ export default function NuevoPedido() {
   }
 
   async function onSubmit(data: OrderFormValues) {
+    // Verificar si hay tienda configurada
+    if (!storeId) {
+      toast.error("Configuración requerida", {
+        description: "Por favor, configura el nombre de tu florería antes de registrar pedidos.",
+        action: {
+          label: "Ir a Configuración",
+          onClick: () => router.push("/configuracion")
+        }
+      })
+      return
+    }
+
     setLoading(true)
     
     // Asegurar que status tenga un valor por defecto
     const orderData = {
       ...data,
+      store_id: storeId,
       status: "pendiente" as const
     }
     
@@ -434,6 +491,32 @@ export default function NuevoPedido() {
       router.push("/")
       router.refresh()
     }
+  }
+
+  // Si no hay tienda configurada, mostrar aviso
+  if (!storeLoading && !storeId) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <Link href="/" className="absolute top-4 right-4 md:top-8 md:right-8">
+            <Button variant="ghost" size="icon" className="rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100">
+              <X size={18} className="md:w-5 md:h-5" />
+            </Button>
+          </Link>
+          <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-6 text-center space-y-4 mt-8">
+            <h2 className="text-2xl font-bold text-amber-800">⚠️ Configuración Requerida</h2>
+            <p className="text-slate-700">
+              Por favor, configura el nombre de tu florería antes de registrar pedidos.
+            </p>
+            <Link href="/configuracion">
+              <Button className="bg-amber-600 hover:bg-amber-700">
+                Ir a Configuración
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
