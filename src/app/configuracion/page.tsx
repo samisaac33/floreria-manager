@@ -209,6 +209,9 @@ export default function ConfiguracionPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+
+      // Redirigir al panel principal
+      router.push('/')
     } catch (error: any) {
       console.error("Error al guardar:", error)
       toast.error("Error al guardar la configuración", {

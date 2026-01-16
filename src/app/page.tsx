@@ -45,7 +45,8 @@ export default function Dashboard() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [storeName, setStoreName] = useState<string>("Logística Florería")
+  const [storeName, setStoreName] = useState<string>("")
+  const [storeId, setStoreId] = useState<string | null>(null)
   const today = new Date()
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>(() => {
     const todayStr = formatLocalDate(today)
@@ -59,6 +60,34 @@ export default function Dashboard() {
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null)
   const evidenceInputRef = useRef<HTMLInputElement | null>(null)
 
+  // Obtener datos de la tienda
+  async function fetchStoreData() {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !user) {
+        setStoreName("Logística Florería")
+        return
+      }
+
+      const { data, error } = await supabase
+        .from("stores")
+        .select("id, name")
+        .eq("owner_id", user.id)
+        .single()
+
+      if (!error && data) {
+        setStoreName(data.name || "Logística Florería")
+        setStoreId(data.id)
+      } else {
+        setStoreName("Logística Florería")
+      }
+    } catch (error) {
+      console.error("Error al cargar tienda:", error)
+      setStoreName("Logística Florería")
+    }
+  }
+
   async function fetchOrders() {
     // Validar rango de 30 días
     const daysDiff = daysDifference(dateRange.from, dateRange.to)
@@ -70,11 +99,18 @@ export default function Dashboard() {
       return
     }
 
+    // Si no hay storeId, no cargar pedidos aún
+    if (!storeId) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
 
     const { data, error } = await supabase
       .from("orders")
       .select("*")
+      .eq("store_id", storeId)  // Filtrar por store_id
       .gte("delivery_date", dateRange.from)
       .lte("delivery_date", dateRange.to)
       .order("created_at", { ascending: false })
@@ -82,33 +118,17 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchOrders() }, [dateRange])
-
-  // Obtener nombre de la tienda
+  // Cargar datos de la tienda primero
   useEffect(() => {
-    async function fetchStore() {
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser()
-        
-        if (userError || !user) {
-          return
-        }
-
-        const { data, error } = await supabase
-          .from("stores")
-          .select("name")
-          .eq("owner_id", user.id)
-          .single()
-
-        if (!error && data?.name) {
-          setStoreName(data.name)
-        }
-      } catch (error) {
-        console.error("Error al cargar tienda:", error)
-      }
-    }
-    fetchStore()
+    fetchStoreData()
   }, [])
+
+  // Cargar pedidos cuando cambie el rango de fechas o el storeId
+  useEffect(() => { 
+    if (storeId) {
+      fetchOrders() 
+    }
+  }, [dateRange, storeId])
 
   async function updateStatus(id: string, newStatus: OrderStatus) {
     const { error } = await supabase
@@ -314,7 +334,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="bg-rose-600 p-2 rounded-lg text-white font-bold text-xl">F</div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">{storeName}</h1>
+            <h1 className="text-xl md:text-2xl font-bold">{storeName || 'Cargando...'}</h1>
             <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Panel de Control</p>
           </div>
         </div>

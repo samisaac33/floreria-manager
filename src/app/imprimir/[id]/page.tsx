@@ -10,6 +10,8 @@ import { QRCodeSVG } from "qrcode.react"
 export default function ImprimirRecibo() {
   const { id } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
+  const [storeName, setStoreName] = useState<string>("Florería")
+  const [storeLogo, setStoreLogo] = useState<string | null>(null)
   const [deliveryUrl, setDeliveryUrl] = useState<string>("")
   const [rutaUrl, setRutaUrl] = useState<string>("")
 
@@ -25,7 +27,24 @@ export default function ImprimirRecibo() {
   useEffect(() => {
     async function getOrder() {
       const { data } = await supabase.from("orders").select("*").eq("id", id).single()
-      if (data) setOrder(data)
+      if (data) {
+        setOrder(data)
+        // Obtener datos de la tienda si hay store_id
+        if (data.store_id) {
+          const { data: storeData } = await supabase
+            .from("stores")
+            .select("name, logo_url")
+            .eq("id", data.store_id)
+            .single()
+          
+          if (storeData) {
+            setStoreName(storeData.name || "Florería")
+            if (storeData.logo_url) {
+              setStoreLogo(storeData.logo_url)
+            }
+          }
+        }
+      }
     }
     getOrder()
   }, [id])
@@ -66,9 +85,19 @@ export default function ImprimirRecibo() {
         
         {/* Encabezado del Recibo */}
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1 mb-2">
-          <div>
-            <h1 className="text-lg font-black uppercase tracking-tighter text-rose-600">Recibo de Entrega</h1>
-            <p className="text-[9px] font-bold text-slate-500 mt-0.5">ID: {order.id?.substring(0, 8).toUpperCase()}</p>
+          <div className="flex items-start gap-2 flex-1">
+            {storeLogo && (
+              <img 
+                src={storeLogo} 
+                alt="Logo" 
+                className="h-8 w-auto object-contain"
+              />
+            )}
+            <div>
+              <h1 className="text-lg font-black uppercase tracking-tighter text-rose-600">{storeName}</h1>
+              <p className="text-[8px] font-bold text-slate-500 mt-0.5">Recibo de Entrega</p>
+              <p className="text-[9px] font-bold text-slate-500">ID: {order.id?.substring(0, 8).toUpperCase()}</p>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-[9px] font-bold uppercase">Fecha</p>
@@ -168,7 +197,7 @@ export default function ImprimirRecibo() {
 
         {/* Footer */}
         <div className="mt-2 text-center text-[7px] text-slate-400 uppercase font-bold border-t pt-1">
-          <p>Comprobante interno - Florería Order Manager</p>
+          <p>Comprobante interno - {storeName}</p>
         </div>
 
       </div>
