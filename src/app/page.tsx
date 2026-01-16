@@ -125,11 +125,11 @@ export default function LandingPage() {
                 <div className="bg-rose-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-rose-600 transition-colors">
                   <QrCode className="h-6 w-6 text-rose-600 group-hover:text-white transition-colors" />
                 </div>
-                <CardTitle className="text-xl font-bold text-slate-900">Logística QR</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-900">Recibo Inteligente con QR</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-slate-600 text-base">
-                  Recibos inteligentes que guían a tus repartidores con GPS y aviso de llegada
+                  Recibos inteligentes con código QR que guían a tus repartidores con GPS y aviso de llegada. Tu mayor ventaja competitiva
                 </CardDescription>
               </CardContent>
             </Card>
@@ -175,9 +175,9 @@ export default function LandingPage() {
               <div className="bg-rose-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Truck className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Gestión de Rutas</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Navegación Ágil</h3>
               <p className="text-slate-600">
-                Optimiza las entregas con seguimiento en tiempo real
+                Optimiza tus entregas con acceso directo a GPS y WhatsApp para tus repartidores
               </p>
             </div>
             <div className="text-center">
@@ -186,16 +186,16 @@ export default function LandingPage() {
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Seguro y Confiable</h3>
               <p className="text-slate-600">
-                Tus datos protegidos con tecnología de última generación
+                Tus datos y los de tus clientes protegidos con seguridad de grado empresarial
               </p>
             </div>
             <div className="text-center">
               <div className="bg-rose-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Aumenta Ventas</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Control de Ventas</h3>
               <p className="text-slate-600">
-                Mejora la eficiencia y atiende más pedidos
+                Gestiona el cobro de cada pedido y genera reportes de cierre de caja al instante
               </p>
             </div>
           </div>
