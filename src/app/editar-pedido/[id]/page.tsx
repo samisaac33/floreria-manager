@@ -112,7 +112,7 @@ export default function EditarPedido() {
       } catch (error) {
         console.error("Error al cargar el pedido:", error)
         alert("Error al cargar el pedido")
-        router.push("/")
+        router.push("/dashboard")
       } finally {
         setLoadingOrder(false)
         setIsInitialized(true)
@@ -194,7 +194,7 @@ export default function EditarPedido() {
       alert("Error al actualizar: " + error.message)
       setLoading(false)
     } else {
-      router.push("/")
+      router.push("/dashboard")
       router.refresh()
     }
   }

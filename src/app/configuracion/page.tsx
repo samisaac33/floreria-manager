@@ -111,7 +111,7 @@ export default function ConfiguracionPage() {
     }
 
     setSaving(true)
-    let logoUrl = store?.logo_url || null
+    let logoUrl: string | undefined = store?.logo_url || undefined
 
     try {
       // Obtener usuario actual PRIMERO - necesario para owner_id y RLS
@@ -162,7 +162,7 @@ export default function ConfiguracionPage() {
           .from('store-assets')
           .getPublicUrl(filePath)
 
-        logoUrl = publicUrl
+        logoUrl = publicUrl || undefined
       }
 
       // Crear o actualizar tienda
@@ -173,7 +173,7 @@ export default function ConfiguracionPage() {
           .from("stores")
           .update({
             name: storeName.trim(),
-            logo_url: logoUrl,
+            logo_url: logoUrl ?? undefined,
             owner_id: userId  // Incluir explícitamente para RLS
           })
           .eq("id", store.id)
@@ -184,14 +184,15 @@ export default function ConfiguracionPage() {
         }
 
         // Actualizar estado local
-        setStore({ ...store, name: storeName.trim(), logo_url: logoUrl })
+        setStore({ ...store, name: storeName.trim(), logo_url: logoUrl ?? undefined })
+        setHasStore(true) // Si actualizó una tienda existente, también marcar que tiene tienda
       } else {
         // Crear nueva tienda - incluir owner_id explícitamente
         const { data: newStore, error: insertError } = await supabase
           .from("stores")
           .insert({
             name: storeName.trim(),
-            logo_url: logoUrl,
+            logo_url: logoUrl ?? undefined,
             owner_id: userId  // Incluir explícitamente para RLS
           })
           .select()
@@ -203,9 +204,6 @@ export default function ConfiguracionPage() {
 
         setStore(newStore)
         setHasStore(true) // Marcar que ahora tiene tienda configurada
-      } else {
-        // Si actualizó una tienda existente, también marcar que tiene tienda
-        setHasStore(true)
       }
 
       toast.success("Configuración guardada", {
