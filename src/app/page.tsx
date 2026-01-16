@@ -277,7 +277,7 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="p-2 md:p-8 max-w-7xl mx-auto space-y-2 md:space-y-6">
+    <main className="p-2 md:p-8 max-w-7xl mx-auto gap-2 md:space-y-6 flex flex-col">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-0">
         <div className="flex items-center gap-3">
           <div className="bg-rose-600 p-2 rounded-lg text-white font-bold text-xl">F</div>
@@ -286,42 +286,38 @@ export default function Dashboard() {
             <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Panel de Control</p>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
-          <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
-            <div className="flex gap-2 flex-1">
-              <div className="flex-1">
-                <label className="block text-[10px] md:text-xs text-slate-600 mb-1">Desde</label>
-                <input
-                  type="date"
-                  value={formatLocalDate(dateRange.from)}
-                  onChange={handleDateFromChange}
-                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-[10px] md:text-xs text-slate-600 mb-1">Hasta</label>
-                <input
-                  type="date"
-                  value={formatLocalDate(dateRange.to)}
-                  onChange={handleDateToChange}
-                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          {/* Fila de Fechas - Móvil optimizado */}
+          <div className="flex gap-2 items-center">
+            <input
+              type="date"
+              value={formatLocalDate(dateRange.from)}
+              onChange={handleDateFromChange}
+              placeholder="Desde"
+              className="flex-1 px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            />
+            <input
+              type="date"
+              value={formatLocalDate(dateRange.to)}
+              onChange={handleDateToChange}
+              placeholder="Hasta"
+              className="flex-1 px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            />
             <Button 
               variant="outline" 
               size="sm"
               onClick={resetToToday}
-              className="text-xs shrink-0 h-[42px] md:h-auto self-end md:self-auto"
+              className="text-xs shrink-0 px-2 md:px-3"
             >
               Hoy
             </Button>
           </div>
+          {/* Fila de Botones - Móvil optimizado */}
           <div className="flex gap-2 items-center">
-            <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10" onClick={fetchOrders}>
+            <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10 shrink-0" onClick={fetchOrders}>
               <RefreshCw size={16}/>
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs md:text-sm">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs md:text-sm shrink-0">
               <LogOut className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Salir
             </Button>
             <Link href="/nuevo-pedido" className="flex-1 md:flex-none">
@@ -335,9 +331,9 @@ export default function Dashboard() {
 
       {/* Resumen de Operaciones (KPIs) */}
       <div className="flex flex-col gap-2">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Card 
-            className={`bg-amber-50 border-amber-200 py-2 md:py-6 px-2 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pendientes' ? 'ring-2 ring-amber-500' : ''}`}
+            className={`bg-amber-50 border-amber-200 py-1.5 md:py-6 px-1.5 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pendientes' ? 'ring-2 ring-amber-500' : ''}`}
             onClick={() => setStatusFilter('pendientes')}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
@@ -351,7 +347,7 @@ export default function Dashboard() {
           </Card>
 
           <Card 
-            className={`bg-purple-50 border-purple-200 py-2 md:py-6 px-2 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'en_ruta' ? 'ring-2 ring-purple-500' : ''}`}
+            className={`bg-purple-50 border-purple-200 py-1.5 md:py-6 px-1.5 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'en_ruta' ? 'ring-2 ring-purple-500' : ''}`}
             onClick={() => setStatusFilter('en_ruta')}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
@@ -365,7 +361,7 @@ export default function Dashboard() {
           </Card>
 
           <Card 
-            className={`bg-emerald-50 border-emerald-200 py-2 md:py-6 px-2 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'entregados' ? 'ring-2 ring-emerald-500' : ''}`}
+            className={`bg-emerald-50 border-emerald-200 py-1.5 md:py-6 px-1.5 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'entregados' ? 'ring-2 ring-emerald-500' : ''}`}
             onClick={() => setStatusFilter('entregados')}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
@@ -379,7 +375,7 @@ export default function Dashboard() {
           </Card>
 
           <Card 
-            className="bg-slate-50 border-slate-200 py-2 md:py-6 px-2 md:px-6 transition-all hover:shadow-md"
+            className="bg-slate-50 border-slate-200 py-1.5 md:py-6 px-1.5 md:px-6 transition-all hover:shadow-md"
           >
             <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
               <CardTitle className="text-[10px] md:text-sm font-medium text-slate-700">Ventas Totales</CardTitle>
@@ -406,7 +402,7 @@ export default function Dashboard() {
       </div>
 
       <Tabs defaultValue="logistica" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsList className="grid w-full grid-cols-2 mb-2 md:mb-4">
           <TabsTrigger value="logistica" className="data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600">
             <Truck className="mr-2 h-4 w-4" />
             Logística
