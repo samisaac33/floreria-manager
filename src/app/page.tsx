@@ -218,8 +218,8 @@ export default function Dashboard() {
             <Link href="/nuevo-pedido" className="flex-1 md:flex-none">
               <Button className="w-full md:w-auto bg-rose-600 hover:bg-rose-700 shadow-md transition-transform active:scale-95 text-xs md:text-sm">
                 <PlusCircle className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Registrar Pedido
-              </Button>
-            </Link>
+            </Button>
+          </Link>
           </div>
         </div>
       </div>
@@ -292,18 +292,18 @@ export default function Dashboard() {
             className="hidden"
             onChange={handleEvidenceFileChange}
           />
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
+        <Table>
+          <TableHeader className="bg-slate-50">
+            <TableRow>
                 <TableHead className="text-xs md:text-sm">Entrega</TableHead>
                 <TableHead className="text-xs md:text-sm">Destinatario</TableHead>
                 <TableHead className="text-xs md:text-sm">Producto</TableHead>
                 <TableHead className="text-xs md:text-sm">Estado</TableHead>
                 <TableHead className="text-center text-xs md:text-sm">Evidencia</TableHead>
                 <TableHead className="text-right text-xs md:text-sm">Ubicación</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
               {filteredOrders.map((order) => (
                 <Dialog key={order.id}>
                   <DialogTrigger asChild>
@@ -321,31 +321,31 @@ export default function Dashboard() {
                       <TableCell className="text-xs">
                         <div className="font-bold text-slate-900">{order.delivery_date}</div>
                         <div className="text-[10px] text-slate-600 font-medium uppercase">{order.delivery_time}</div>
-                      </TableCell>
+                </TableCell>
                       <TableCell className="text-xs">
                         <div className="font-semibold text-slate-900 capitalize text-[10px] md:text-xs">{order.recipient_name}</div>
                         <div className="text-[9px] md:text-[10px] text-slate-700 flex items-center gap-1">
                           <MapPin size={10} className="text-rose-400 shrink-0"/> 
                           <span className="truncate">{order.recipient_address.substring(0, 20)}...</span>
-                        </div>
-                      </TableCell>
+                  </div>
+                </TableCell>
                       <TableCell className="text-xs">
-                        <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                           <Badge variant="outline" className="font-mono bg-slate-50 text-slate-900 text-[9px] md:text-xs border-slate-300">{order.product_code}</Badge>
-                        </div>
-                      </TableCell>
+                  </div>
+                </TableCell>
                       <TableCell className="text-xs">
-                        <select 
+                  <select 
                           className={`text-[10px] md:text-[11px] font-bold rounded-full px-2 md:px-3 py-1 border-none focus:ring-2 focus:ring-rose-500 cursor-pointer ${statusStyles[order.status]}`}
-                          value={order.status}
-                          onChange={(e) => updateStatus(order.id!, e.target.value as OrderStatus)}
+                    value={order.status}
+                    onChange={(e) => updateStatus(order.id!, e.target.value as OrderStatus)}
                           onClick={(e) => e.stopPropagation()}
-                        >
-                          <option value="pendiente">Pendiente</option>
-                          <option value="en_camino">En Camino</option>
-                          <option value="entregado">Entregado</option>
-                        </select>
-                      </TableCell>
+                  >
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en_camino">En Camino</option>
+                    <option value="entregado">Entregado</option>
+                  </select>
+                </TableCell>
                       <TableCell className="text-center text-xs">
                         {order.delivery_photo_url ? (
                           <Dialog>
@@ -411,24 +411,24 @@ export default function Dashboard() {
                             )}
                           </Button>
                         )}
-                      </TableCell>
-                      <TableCell className="text-right">
+                </TableCell>
+                <TableCell className="text-right">
                         {/* Botones para Desktop */}
                         <div className="hidden md:flex justify-end gap-1 items-center">
                           {/* BOTÓN COPIAR GPS o Indicador sin ubicación */}
                           {order.gps_url ? (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
                               className="h-8 w-8 text-blue-500 hover:bg-blue-50 shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 copyToClipboard(order.gps_url!)
                               }}
-                              title="Copiar Link GPS"
-                            >
-                              <Copy size={16} />
-                            </Button>
+                        title="Copiar Link GPS"
+                      >
+                        <Copy size={16} />
+                      </Button>
                           ) : (
                             <div className="flex items-center gap-1 text-slate-400 text-xs shrink-0">
                               <MapPinOff size={16} />
@@ -461,8 +461,8 @@ export default function Dashboard() {
                             <Pencil size={16} />
                           </Button>
 
-                          <Dialog>
-                            <DialogTrigger asChild>
+                    <Dialog>
+                      <DialogTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -470,8 +470,8 @@ export default function Dashboard() {
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <Trash2 size={16} />
-                              </Button>
-                            </DialogTrigger>
+                        </Button>
+                      </DialogTrigger>
                             <DialogContent className="max-w-sm bg-white">
                               <DialogHeader>
                                 <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
@@ -555,7 +555,7 @@ export default function Dashboard() {
                                   </DropdownMenuItem>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-sm bg-white">
-                                  <DialogHeader>
+                        <DialogHeader>
                                     <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
                                     <DialogDescription>
                                       ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
@@ -589,12 +589,12 @@ export default function Dashboard() {
                     <DialogHeader className="sticky top-0 bg-white z-10 pb-2 border-b border-slate-200">
                       <DialogTitle className="text-rose-600 flex items-center gap-2 text-base md:text-lg">
                         <Package size={18} className="md:w-5 md:h-5" /> Detalle de Entrega
-                      </DialogTitle>
+                          </DialogTitle>
                       <DialogDescription className="text-xs md:text-sm">
-                        Información completa del pedido para el equipo de logística.
-                      </DialogDescription>
-                    </DialogHeader>
-                    
+                            Información completa del pedido para el equipo de logística.
+                          </DialogDescription>
+                        </DialogHeader>
+                        
                     <div className="space-y-3 md:space-y-4 pt-3 md:pt-4 px-1">
                       <div className="bg-rose-50 p-2 md:p-4 rounded-xl border border-rose-100 max-h-32 overflow-y-auto relative">
                         <div className="flex items-start justify-between mb-1 md:mb-2">
@@ -617,30 +617,44 @@ export default function Dashboard() {
                           )}
                         </div>
                         <p className="text-xs md:text-sm font-serif italic text-slate-800 leading-relaxed pr-2">
-                          "{order.dedication || 'Sin dedicatoria'}"
-                        </p>
-                      </div>
+                              "{order.dedication || 'Sin dedicatoria'}"
+                            </p>
+                          </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
-                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg">
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg relative">
                           <h4 className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase mb-1">Quien compra</h4>
                           <p className="text-xs md:text-sm font-semibold">{order.client_name}</p>
                           <p className="text-[10px] md:text-xs text-slate-500">{order.client_phone}</p>
-                        </div>
+                          {order.client_phone && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-2 right-2 h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                window.open(`https://wa.me/${order.client_phone.replace(/\D/g, "")}`, "_blank")
+                              }}
+                              title="WhatsApp del Cliente"
+                            >
+                              <Phone size={12} className="md:w-3 md:h-3" />
+                            </Button>
+                          )}
+                            </div>
                         <div className="p-2 md:p-3 bg-slate-50 rounded-lg">
                           <h4 className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase mb-1">Producto</h4>
                           <p className="text-xs md:text-sm font-semibold">{order.product_code}</p>
                           <p className="text-[10px] md:text-xs text-slate-500">{order.extras || 'Sin extras'}</p>
-                        </div>
-                      </div>
+                            </div>
+                          </div>
 
                       <div className="border-t pt-2 md:pt-4">
                         <h4 className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase mb-1">Notas del Taller</h4>
                         <p className="text-[10px] md:text-xs text-slate-600 bg-amber-50 p-2 rounded border border-amber-100 italic">
-                          {order.observations || 'Sin observaciones'}
-                        </p>
-                      </div>
-                    </div>
+                              {order.observations || 'Sin observaciones'}
+                            </p>
+                          </div>
+                        </div>
 
                     {/* Acciones Rápidas */}
                     <div className="mt-3 md:mt-4 border-t pt-3 md:pt-4">
@@ -665,12 +679,12 @@ export default function Dashboard() {
                           className="w-full gap-2 text-xs md:text-sm h-10 md:h-11 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
                           onClick={(e) => {
                             e.stopPropagation()
-                            window.open(`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`, "_blank")
+                            window.open(`https://wa.me/${order.client_phone.replace(/\D/g, "")}`, "_blank")
                           }}
                         >
                           <Phone size={16} className="md:w-4 md:h-4" />
-                          <span className="hidden sm:inline">WhatsApp</span>
-                          <span className="sm:hidden">WA</span>
+                          <span className="hidden sm:inline">WhatsApp Cliente</span>
+                          <span className="sm:hidden">WA Cliente</span>
                         </Button>
                         <Button
                           className="w-full bg-slate-900 hover:bg-black gap-2 text-xs md:text-sm h-10 md:h-11 col-span-2 md:col-span-1"
@@ -682,14 +696,14 @@ export default function Dashboard() {
                           <Printer size={16} className="md:w-4 md:h-4" />
                           <span className="hidden sm:inline">Imprimir</span>
                           <span className="sm:hidden">Recibo</span>
-                        </Button>
+                           </Button>
                       </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              ))}
-            </TableBody>
-          </Table>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+            ))}
+          </TableBody>
+        </Table>
         </div>
       </div>
     </main>
