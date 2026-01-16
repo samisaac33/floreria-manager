@@ -300,7 +300,7 @@ export default function Dashboard() {
                 <TableHead className="text-xs md:text-sm">Producto</TableHead>
                 <TableHead className="text-xs md:text-sm">Estado</TableHead>
                 <TableHead className="text-center text-xs md:text-sm">Evidencia</TableHead>
-                <TableHead className="text-right text-xs md:text-sm">Ubicación</TableHead>
+                <TableHead className="text-right text-xs md:text-sm">WhatsApp Destinatario</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -442,8 +442,9 @@ export default function Dashboard() {
                             className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 shrink-0"
                             asChild
                             onClick={(e) => e.stopPropagation()}
+                            title="WhatsApp Destinatario"
                           >
-                            <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`} target="_blank">
+                            <a href={`https://wa.me/${order.recipient_phone.replace(/\D/g, "")}`} target="_blank" title="WhatsApp Destinatario">
                               <Phone size={18} />
                             </a>
                           </Button>
@@ -635,7 +636,7 @@ export default function Dashboard() {
                                 e.stopPropagation()
                                 window.open(`https://wa.me/${order.client_phone.replace(/\D/g, "")}`, "_blank")
                               }}
-                              title="WhatsApp del Cliente"
+                              title="WhatsApp Cliente"
                             >
                               <Phone size={12} className="md:w-3 md:h-3" />
                             </Button>
