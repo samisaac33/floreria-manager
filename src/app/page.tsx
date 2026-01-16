@@ -32,7 +32,7 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical, DollarSign, Receipt } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical, DollarSign, Receipt, FileText } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -315,6 +315,15 @@ export default function Dashboard() {
               className="text-xs shrink-0 px-2 md:px-3"
             >
               Hoy
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.open(`/reporte?from=${dateRange.from}&to=${dateRange.to}`, '_blank')}
+              className="text-xs shrink-0 px-2 md:px-3 border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-700"
+            >
+              <FileText className="mr-1 h-3 w-3 md:h-4 md:w-4" />
+              Cerrar Caja
             </Button>
           </div>
           {/* Fila de Botones - Móvil optimizado */}
