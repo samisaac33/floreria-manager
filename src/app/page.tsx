@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Order, OrderStatus } from "@/types/order"
 import { toast } from "sonner"
+import { differenceInDays, format, startOfDay } from "date-fns"
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table"
@@ -30,28 +31,47 @@ export default function Dashboard() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [filterDate, setFilterDate] = useState(() => {
-    const today = new Date()
-    return today.toISOString().split('T')[0] // YYYY-MM-DD
+  const getToday = () => startOfDay(new Date())
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
+    const today = getToday()
+    return { from: today, to: today }
   })
   const [statusFilter, setStatusFilter] = useState<'todos' | 'pendientes' | 'en_ruta' | 'entregados'>('todos')
   const [billingFilter, setBillingFilter] = useState<'todos' | 'pendientes' | 'facturados'>('todos')
   const [evidenceUploading, setEvidenceUploading] = useState(false)
   const [evidenceOrderId, setEvidenceOrderId] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null)
   const evidenceInputRef = useRef<HTMLInputElement | null>(null)
 
   async function fetchOrders() {
+    // Validar rango de 30 días
+    const daysDiff = differenceInDays(dateRange.to, dateRange.from)
+    if (daysDiff > 30) {
+      toast.error("Rango excedido", {
+        description: "El periodo máximo de consulta es de 30 días.",
+      })
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
+    
+    // Formatear fechas a YYYY-MM-DD para Supabase
+    const fromStr = format(dateRange.from, 'yyyy-MM-dd')
+    const toStr = format(dateRange.to, 'yyyy-MM-dd')
+
     const { data, error } = await supabase
       .from("orders")
       .select("*")
-      .eq("delivery_date", filterDate)
+      .gte("delivery_date", fromStr)
+      .lte("delivery_date", toStr)
       .order("created_at", { ascending: false })
     if (!error) setOrders(data || [])
     setLoading(false)
   }
 
-  useEffect(() => { fetchOrders() }, [filterDate])
+  useEffect(() => { fetchOrders() }, [dateRange])
 
   async function updateStatus(id: string, newStatus: OrderStatus) {
     const { error } = await supabase
@@ -92,7 +112,15 @@ export default function Dashboard() {
     }
 
     toast.success("Pedido eliminado")
+    setDeleteDialogOpen(false)
+    setOrderToDelete(null)
     fetchOrders()
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent, orderId: string) => {
+    e.stopPropagation()
+    setOrderToDelete(orderId)
+    setDeleteDialogOpen(true)
   }
 
   const handleEvidenceUploadClick = (orderId: string) => {
@@ -158,8 +186,46 @@ export default function Dashboard() {
   }
 
   const resetToToday = () => {
-    const today = new Date()
-    setFilterDate(today.toLocaleDateString('sv-SE'))
+    const today = getToday()
+    setDateRange({ from: today, to: today })
+  }
+
+  const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFrom = startOfDay(new Date(e.target.value))
+    const daysDiff = differenceInDays(dateRange.to, newFrom)
+    
+    if (daysDiff > 30) {
+      toast.error("Rango excedido", {
+        description: "El periodo máximo de consulta es de 30 días.",
+      })
+      return
+    }
+    
+    if (newFrom > dateRange.to) {
+      // Si la fecha "desde" es mayor que "hasta", ajustar "hasta" a "desde"
+      setDateRange({ from: newFrom, to: newFrom })
+    } else {
+      setDateRange({ ...dateRange, from: newFrom })
+    }
+  }
+
+  const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTo = startOfDay(new Date(e.target.value))
+    const daysDiff = differenceInDays(newTo, dateRange.from)
+    
+    if (daysDiff > 30) {
+      toast.error("Rango excedido", {
+        description: "El periodo máximo de consulta es de 30 días.",
+      })
+      return
+    }
+    
+    if (newTo < dateRange.from) {
+      // Si la fecha "hasta" es menor que "desde", ajustar "desde" a "hasta"
+      setDateRange({ from: newTo, to: newTo })
+    } else {
+      setDateRange({ ...dateRange, to: newTo })
+    }
   }
 
   const handleLogout = async () => {
@@ -216,18 +282,32 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
-          <div className="flex gap-2 items-center">
-            <input
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className="flex-1 md:flex-none px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            />
+          <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
+            <div className="flex gap-2 flex-1">
+              <div className="flex-1">
+                <label className="block text-[10px] md:text-xs text-slate-600 mb-1">Desde</label>
+                <input
+                  type="date"
+                  value={format(dateRange.from, 'yyyy-MM-dd')}
+                  onChange={handleDateFromChange}
+                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-[10px] md:text-xs text-slate-600 mb-1">Hasta</label>
+                <input
+                  type="date"
+                  value={format(dateRange.to, 'yyyy-MM-dd')}
+                  onChange={handleDateToChange}
+                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                />
+              </div>
+            </div>
             <Button 
               variant="outline" 
               size="sm"
               onClick={resetToToday}
-              className="text-xs shrink-0"
+              className="text-xs shrink-0 h-[42px] md:h-auto self-end md:self-auto"
             >
               Hoy
             </Button>
@@ -302,7 +382,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="p-0 pt-1">
               <div className="text-lg md:text-3xl font-bold text-slate-700">${ventasTotales.toFixed(2)}</div>
-              <p className="text-[9px] md:text-xs text-slate-600 mt-0.5 md:mt-1 hidden md:block">Total del día</p>
+              <p className="text-[9px] md:text-xs text-slate-600 mt-0.5 md:mt-1 hidden md:block">Total del período</p>
             </CardContent>
           </Card>
         </div>
@@ -352,7 +432,7 @@ export default function Dashboard() {
                 <TableHead className="text-center text-xs md:text-sm">Evidencia</TableHead>
                 <TableHead className="text-right text-xs md:text-sm">
                   <span className="md:hidden">Acciones</span>
-                  <span className="hidden md:inline">WhatsApp Destinatario</span>
+                  <span className="hidden md:inline">Acciones</span>
                 </TableHead>
             </TableRow>
           </TableHeader>
@@ -515,42 +595,15 @@ export default function Dashboard() {
                             <Pencil size={16} />
                           </Button>
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-red-600 hover:bg-red-50 shrink-0"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Trash2 size={16} />
-                        </Button>
-                      </DialogTrigger>
-                            <DialogContent className="max-w-sm bg-white">
-                              <DialogHeader>
-                                <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
-                                <DialogDescription>
-                                  ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <DialogFooter className="mt-2">
-                                <DialogClose asChild>
-                                  <Button variant="outline" className="w-full sm:w-auto">
-                                    Cancelar
-                                  </Button>
-                                </DialogClose>
-                                <DialogClose asChild>
-                                  <Button
-                                    variant="destructive"
-                                    className="w-full sm:w-auto"
-                                    onClick={() => deleteOrder(order.id!)}
-                                  >
-                                    Eliminar
-                                  </Button>
-                                </DialogClose>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600 hover:bg-red-50 shrink-0"
+                            onClick={(e) => handleDeleteClick(e, order.id!)}
+                            title="Eliminar pedido"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
                         </div>
 
                         {/* Menú de tres puntos para Mobile */}
@@ -596,43 +649,16 @@ export default function Dashboard() {
                                 <Pencil size={16} className="mr-2" />
                                 Editar
                               </DropdownMenuItem>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <DropdownMenuItem
-                                    onSelect={(e) => {
-                                      e.preventDefault()
-                                    }}
-                                    className="text-red-600"
-                                  >
-                                    <Trash2 size={16} className="mr-2" />
-                                    Eliminar
-                                  </DropdownMenuItem>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-sm bg-white">
-                        <DialogHeader>
-                                    <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
-                                    <DialogDescription>
-                                      ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  <DialogFooter className="mt-2">
-                                    <DialogClose asChild>
-                                      <Button variant="outline" className="w-full sm:w-auto">
-                                        Cancelar
-                                      </Button>
-                                    </DialogClose>
-                                    <DialogClose asChild>
-                                      <Button
-                                        variant="destructive"
-                                        className="w-full sm:w-auto"
-                                        onClick={() => deleteOrder(order.id!)}
-                                      >
-                                        Eliminar
-                                      </Button>
-                                    </DialogClose>
-                                  </DialogFooter>
-                                </DialogContent>
-                              </Dialog>
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.preventDefault()
+                                  handleDeleteClick(e as any, order.id!)
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                Eliminar
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -758,8 +784,43 @@ export default function Dashboard() {
             ))}
           </TableBody>
         </Table>
-        </div>
       </div>
+      </div>
+
+          {/* Dialog independiente de confirmación de eliminación */}
+          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogContent className="max-w-sm bg-white">
+              <DialogHeader>
+                <DialogTitle className="text-red-600">Confirmar eliminación</DialogTitle>
+                <DialogDescription>
+                  ¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="mt-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    setDeleteDialogOpen(false)
+                    setOrderToDelete(null)
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    if (orderToDelete) {
+                      deleteOrder(orderToDelete)
+                    }
+                  }}
+                >
+                  Eliminar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="facturacion" className="mt-0">
