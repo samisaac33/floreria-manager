@@ -28,6 +28,7 @@ export default function ConfiguracionPage() {
   const [storeName, setStoreName] = useState("")
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [hasStore, setHasStore] = useState(false) // Para bloquear navegación si no hay tienda
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -62,9 +63,12 @@ export default function ConfiguracionPage() {
       if (data) {
         setStore(data)
         setStoreName(data.name || "")
+        setHasStore(true) // El usuario ya tiene tienda configurada
         if (data.logo_url) {
           setLogoPreview(data.logo_url)
         }
+      } else {
+        setHasStore(false) // No tiene tienda, debe configurarla
       }
     } catch (error: any) {
       console.error("Error al cargar tienda:", error)
@@ -198,6 +202,10 @@ export default function ConfiguracionPage() {
         }
 
         setStore(newStore)
+        setHasStore(true) // Marcar que ahora tiene tienda configurada
+      } else {
+        // Si actualizó una tienda existente, también marcar que tiene tienda
+        setHasStore(true)
       }
 
       toast.success("Configuración guardada", {
@@ -211,7 +219,7 @@ export default function ConfiguracionPage() {
       }
 
       // Redirigir al panel principal
-      router.push('/')
+      router.push('/dashboard')
     } catch (error: any) {
       console.error("Error al guardar:", error)
       toast.error("Error al guardar la configuración", {
@@ -248,11 +256,14 @@ export default function ConfiguracionPage() {
               <p className="text-sm text-slate-500">Gestiona la información de tu florería</p>
             </div>
           </div>
-          <Link href="/">
-            <Button variant="ghost" size="icon">
-              <X className="h-5 w-5" />
-            </Button>
-          </Link>
+          {/* Solo mostrar botón de cerrar si ya tiene tienda configurada */}
+          {hasStore && (
+            <Link href="/dashboard">
+              <Button variant="ghost" size="icon">
+                <X className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Formulario */}
@@ -341,15 +352,18 @@ export default function ConfiguracionPage() {
 
             {/* Botón Guardar */}
             <div className="flex gap-2 pt-4">
-              <Link href="/" className="flex-1">
-                <Button variant="outline" className="w-full" disabled={saving || compressing}>
-                  Cancelar
-                </Button>
-              </Link>
+              {/* Solo mostrar botón Cancelar si ya tiene tienda configurada */}
+              {hasStore && (
+                <Link href="/dashboard" className="flex-1">
+                  <Button variant="outline" className="w-full" disabled={saving || compressing}>
+                    Cancelar
+                  </Button>
+                </Link>
+              )}
               <Button
                 onClick={handleSave}
                 disabled={saving || compressing || !storeName.trim()}
-                className="flex-1 bg-rose-600 hover:bg-rose-700"
+                className={`${hasStore ? 'flex-1' : 'w-full'} bg-rose-600 hover:bg-rose-700`}
               >
                 {compressing ? (
                   <>

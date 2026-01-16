@@ -36,17 +36,44 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Permitir acceso público a las rutas de entrega y ruta
-  if (request.nextUrl.pathname.startsWith('/entregar/') || request.nextUrl.pathname.startsWith('/ruta/')) {
+  // Permitir acceso público a las rutas de entrega, ruta y landing page
+  if (
+    request.nextUrl.pathname.startsWith('/entregar/') || 
+    request.nextUrl.pathname.startsWith('/ruta/') ||
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname === '/login'
+  ) {
     return response
   }
 
-  if (!user && !request.nextUrl.pathname.startsWith('/login')) {
+  // Si no hay usuario, redirigir a login
+  if (!user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
-    return NextResponse.redirect(new URL('/', request.url))
+  // Si el usuario está en login pero ya está autenticado, redirigir al dashboard
+  if (user && request.nextUrl.pathname === '/login') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Si el usuario está en /configuracion, permitir el acceso (necesario para configurar)
+  if (request.nextUrl.pathname === '/configuracion') {
+    return response
+  }
+
+  // Para todas las demás rutas protegidas, verificar si tiene tienda configurada
+  if (user && request.nextUrl.pathname !== '/configuracion') {
+    // Verificar si el usuario tiene una tienda
+    const { data: store, error } = await supabase
+      .from("stores")
+      .select("id")
+      .eq("owner_id", user.id)
+      .single()
+
+    // Si no hay tienda y no está en /configuracion, redirigir a configuración
+    if ((error || !store) && request.nextUrl.pathname !== '/configuracion') {
+      return NextResponse.redirect(new URL('/configuracion', request.url))
+    }
   }
 
   return response

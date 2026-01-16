@@ -26,7 +26,7 @@ export default function LoginPage() {
       toast.error("Error de acceso", { description: "Credenciales incorrectas" })
     } else {
       toast.success("¡Bienvenido!", { description: "Accediendo al sistema..." })
-      window.location.href = "/"
+      window.location.href = "/dashboard"
     }
     setLoading(false)
   }
