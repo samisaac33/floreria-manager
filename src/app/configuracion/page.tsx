@@ -110,12 +110,15 @@ export default function ConfiguracionPage() {
     let logoUrl = store?.logo_url || null
 
     try {
-      // Obtener usuario actual
+      // Obtener usuario actual PRIMERO - necesario para owner_id y RLS
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
-      if (userError || !user) {
-        throw new Error("No se pudo obtener el usuario")
+      if (userError || !user || !user.id) {
+        throw new Error("No se pudo obtener el usuario. Por favor, inicia sesión nuevamente.")
       }
+
+      // Guardar user.id en variable para uso posterior
+      const userId = user.id
 
       // Si hay un archivo de logo, comprimirlo y subirlo
       if (logoFile) {
@@ -135,7 +138,7 @@ export default function ConfiguracionPage() {
 
         // Generar nombre único para el logo
         const fileExt = compressedFile.name.split('.').pop()
-        const fileName = `logo-${user.id}-${Date.now()}.${fileExt}`
+        const fileName = `logo-${userId}-${Date.now()}.${fileExt}`
         const filePath = `${fileName}`
 
         // Subir a Supabase Storage
@@ -159,27 +162,33 @@ export default function ConfiguracionPage() {
       }
 
       // Crear o actualizar tienda
+      // CRÍTICO: Incluir owner_id explícitamente para que RLS lo reconozca
       if (store) {
-        // Actualizar tienda existente
+        // Actualizar tienda existente - incluir owner_id explícitamente
         const { error: updateError } = await supabase
           .from("stores")
           .update({
             name: storeName.trim(),
-            logo_url: logoUrl
+            logo_url: logoUrl,
+            owner_id: userId  // Incluir explícitamente para RLS
           })
           .eq("id", store.id)
+          .eq("owner_id", userId)  // Doble verificación para seguridad RLS
 
         if (updateError) {
           throw updateError
         }
+
+        // Actualizar estado local
+        setStore({ ...store, name: storeName.trim(), logo_url: logoUrl })
       } else {
-        // Crear nueva tienda
+        // Crear nueva tienda - incluir owner_id explícitamente
         const { data: newStore, error: insertError } = await supabase
           .from("stores")
           .insert({
             name: storeName.trim(),
             logo_url: logoUrl,
-            owner_id: user.id
+            owner_id: userId  // Incluir explícitamente para RLS
           })
           .select()
           .single()
