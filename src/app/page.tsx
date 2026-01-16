@@ -6,12 +6,21 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Order, OrderStatus } from "@/types/order"
 import { toast } from "sonner"
-import { differenceInDays, format, startOfDay } from "date-fns"
+// Función helper para formatear fechas en hora local (YYYY-MM-DD) - Sin zona horaria
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-// Función helper para formatear fechas en hora local (YYYY-MM-DD)
-function formatLocalDate(date: Date): string {
-  return date.toLocaleDateString('sv-SE') // sv-SE siempre devuelve YYYY-MM-DD en hora local
-}
+// Función helper para calcular diferencia de días entre strings YYYY-MM-DD
+const daysDifference = (dateStr1: string, dateStr2: string): number => {
+  const date1 = new Date(dateStr1 + 'T00:00:00');
+  const date2 = new Date(dateStr2 + 'T00:00:00');
+  const diffTime = Math.abs(date2.getTime() - date1.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table"
@@ -36,10 +45,10 @@ export default function Dashboard() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const getToday = () => startOfDay(new Date())
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
-    const today = getToday()
-    return { from: today, to: today }
+  const today = new Date()
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>(() => {
+    const todayStr = formatLocalDate(today)
+    return { from: todayStr, to: todayStr }
   })
   const [statusFilter, setStatusFilter] = useState<'todos' | 'pendientes' | 'en_ruta' | 'entregados'>('todos')
   const [billingFilter, setBillingFilter] = useState<'todos' | 'pendientes' | 'facturados'>('todos')
@@ -51,7 +60,7 @@ export default function Dashboard() {
 
   async function fetchOrders() {
     // Validar rango de 30 días
-    const daysDiff = differenceInDays(dateRange.to, dateRange.from)
+    const daysDiff = daysDifference(dateRange.from, dateRange.to)
     if (daysDiff > 30) {
       toast.error("Rango excedido", {
         description: "El periodo máximo de consulta es de 30 días.",
@@ -61,16 +70,12 @@ export default function Dashboard() {
     }
 
     setLoading(true)
-    
-    // Formatear fechas a YYYY-MM-DD para Supabase usando hora local
-    const fromStr = formatLocalDate(dateRange.from)
-    const toStr = formatLocalDate(dateRange.to)
 
     const { data, error } = await supabase
       .from("orders")
       .select("*")
-      .gte("delivery_date", fromStr)
-      .lte("delivery_date", toStr)
+      .gte("delivery_date", dateRange.from)
+      .lte("delivery_date", dateRange.to)
       .order("created_at", { ascending: false })
     if (!error) setOrders(data || [])
     setLoading(false)
@@ -191,13 +196,13 @@ export default function Dashboard() {
   }
 
   const resetToToday = () => {
-    const today = getToday()
-    setDateRange({ from: today, to: today })
+    const todayStr = formatLocalDate(new Date())
+    setDateRange({ from: todayStr, to: todayStr })
   }
 
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFrom = startOfDay(new Date(e.target.value))
-    const daysDiff = differenceInDays(dateRange.to, newFrom)
+    const newFrom = e.target.value // Ya es YYYY-MM-DD
+    const daysDiff = daysDifference(newFrom, dateRange.to)
     
     if (daysDiff > 30) {
       toast.error("Rango excedido", {
@@ -215,8 +220,8 @@ export default function Dashboard() {
   }
 
   const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTo = startOfDay(new Date(e.target.value))
-    const daysDiff = differenceInDays(newTo, dateRange.from)
+    const newTo = e.target.value // Ya es YYYY-MM-DD
+    const daysDiff = daysDifference(dateRange.from, newTo)
     
     if (daysDiff > 30) {
       toast.error("Rango excedido", {
@@ -291,14 +296,14 @@ export default function Dashboard() {
           <div className="flex gap-2 items-center">
             <input
               type="date"
-              value={formatLocalDate(dateRange.from)}
+              value={dateRange.from}
               onChange={handleDateFromChange}
               placeholder="Desde"
               className="flex-1 px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
             />
             <input
               type="date"
-              value={formatLocalDate(dateRange.to)}
+              value={dateRange.to}
               onChange={handleDateToChange}
               placeholder="Hasta"
               className="flex-1 px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
