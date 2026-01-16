@@ -15,8 +15,8 @@ export interface Order {
   client_phone: string;
   client_tax_id?: string;
   client_email?: string;
-  product_code: string;
   price?: number;
+  product_code: string;
   extras?: string;
   observations?: string;
   status: OrderStatus;
