@@ -7,6 +7,11 @@ import { supabase } from "@/lib/supabase"
 import { Order, OrderStatus } from "@/types/order"
 import { toast } from "sonner"
 import { differenceInDays, format, startOfDay } from "date-fns"
+
+// Función helper para formatear fechas en hora local (YYYY-MM-DD)
+function formatLocalDate(date: Date): string {
+  return date.toLocaleDateString('sv-SE') // sv-SE siempre devuelve YYYY-MM-DD en hora local
+}
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table"
@@ -57,9 +62,9 @@ export default function Dashboard() {
 
     setLoading(true)
     
-    // Formatear fechas a YYYY-MM-DD para Supabase
-    const fromStr = format(dateRange.from, 'yyyy-MM-dd')
-    const toStr = format(dateRange.to, 'yyyy-MM-dd')
+    // Formatear fechas a YYYY-MM-DD para Supabase usando hora local
+    const fromStr = formatLocalDate(dateRange.from)
+    const toStr = formatLocalDate(dateRange.to)
 
     const { data, error } = await supabase
       .from("orders")
@@ -288,7 +293,7 @@ export default function Dashboard() {
                 <label className="block text-[10px] md:text-xs text-slate-600 mb-1">Desde</label>
                 <input
                   type="date"
-                  value={format(dateRange.from, 'yyyy-MM-dd')}
+                  value={formatLocalDate(dateRange.from)}
                   onChange={handleDateFromChange}
                   className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 />
@@ -297,7 +302,7 @@ export default function Dashboard() {
                 <label className="block text-[10px] md:text-xs text-slate-600 mb-1">Hasta</label>
                 <input
                   type="date"
-                  value={format(dateRange.to, 'yyyy-MM-dd')}
+                  value={formatLocalDate(dateRange.to)}
                   onChange={handleDateToChange}
                   className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 />
@@ -617,9 +622,9 @@ export default function Dashboard() {
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreVertical size={16} />
-                              </Button>
+                        </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-48 z-50">
                               {order.gps_url && (
                                 <DropdownMenuItem
                                   onClick={(e) => {
@@ -652,7 +657,11 @@ export default function Dashboard() {
                               <DropdownMenuItem
                                 onSelect={(e) => {
                                   e.preventDefault()
+                                  e.stopPropagation()
                                   handleDeleteClick(e as any, order.id!)
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                 }}
                                 className="text-red-600"
                               >
@@ -664,7 +673,7 @@ export default function Dashboard() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  </DialogTrigger>
+                      </DialogTrigger>
                   <DialogContent className="max-w-md bg-white max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="sticky top-0 bg-white z-10 pb-2 border-b border-slate-200">
                       <DialogTitle className="text-rose-600 flex items-center gap-2 text-base md:text-lg">
