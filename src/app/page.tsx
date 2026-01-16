@@ -300,7 +300,10 @@ export default function Dashboard() {
                 <TableHead className="text-xs md:text-sm">Producto</TableHead>
                 <TableHead className="text-xs md:text-sm">Estado</TableHead>
                 <TableHead className="text-center text-xs md:text-sm">Evidencia</TableHead>
-                <TableHead className="text-right text-xs md:text-sm">WhatsApp Destinatario</TableHead>
+                <TableHead className="text-right text-xs md:text-sm">
+                  <span className="md:hidden">Acciones</span>
+                  <span className="hidden md:inline">WhatsApp Destinatario</span>
+                </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -532,7 +535,7 @@ export default function Dashboard() {
                                 }}
                               >
                                 <Phone size={16} className="mr-2" />
-                                WhatsApp
+                                WhatsApp dest.
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={(e) => {
