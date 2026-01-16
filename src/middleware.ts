@@ -36,8 +36,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Permitir acceso público a la ruta de entrega
-  if (request.nextUrl.pathname.startsWith('/entregar/')) {
+  // Permitir acceso público a las rutas de entrega y ruta
+  if (request.nextUrl.pathname.startsWith('/entregar/') || request.nextUrl.pathname.startsWith('/ruta/')) {
     return response
   }
 

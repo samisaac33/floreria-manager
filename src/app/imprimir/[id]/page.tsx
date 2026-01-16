@@ -11,12 +11,14 @@ export default function ImprimirRecibo() {
   const { id } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
   const [deliveryUrl, setDeliveryUrl] = useState<string>("")
+  const [rutaUrl, setRutaUrl] = useState<string>("")
 
   useEffect(() => {
-    // Construir la URL de entrega
+    // Construir las URLs
     if (typeof window !== 'undefined') {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
       setDeliveryUrl(`${baseUrl}/entregar/${id}`)
+      setRutaUrl(`${baseUrl}/ruta/${id}`)
     }
   }, [id])
 
@@ -107,20 +109,20 @@ export default function ImprimirRecibo() {
             </div>
           </div>
 
-          {/* Columna Derecha: QR GPS */}
+          {/* Columna Derecha: QR Portal de Ruta */}
           <div className="flex flex-col items-center">
-            {order.gps_url ? (
+            {rutaUrl ? (
               <>
                 <div className="bg-white p-1 rounded border border-slate-300">
-                  <QRCodeSVG value={order.gps_url} size={70} />
+                  <QRCodeSVG value={rutaUrl} size={70} />
                 </div>
                 <p className="text-[7px] text-slate-600 font-medium text-center mt-0.5 leading-tight">
-                  Escanear para Ruta
+                  GESTIÓN DE RUTA<br />(Mapa y WhatsApp)
                 </p>
               </>
             ) : (
               <div className="bg-slate-100 p-1 rounded border border-slate-300 w-[70px] h-[70px] flex items-center justify-center">
-                <p className="text-[7px] text-slate-400 text-center">Sin GPS</p>
+                <p className="text-[7px] text-slate-400 text-center">Sin Ruta</p>
               </div>
             )}
           </div>
