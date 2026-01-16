@@ -17,13 +17,14 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical, DollarSign, Receipt } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -34,6 +35,7 @@ export default function Dashboard() {
     return today.toISOString().split('T')[0] // YYYY-MM-DD
   })
   const [statusFilter, setStatusFilter] = useState<'todos' | 'pendientes' | 'en_ruta' | 'entregados'>('todos')
+  const [billingFilter, setBillingFilter] = useState<'todos' | 'pendientes' | 'facturados'>('todos')
   const [evidenceUploading, setEvidenceUploading] = useState(false)
   const [evidenceOrderId, setEvidenceOrderId] = useState<string | null>(null)
   const evidenceInputRef = useRef<HTMLInputElement | null>(null)
@@ -57,6 +59,19 @@ export default function Dashboard() {
       .update({ status: newStatus })
       .eq("id", id)
     if (!error) fetchOrders()
+  }
+
+  async function updateBilled(id: string, billed: boolean) {
+    const { error } = await supabase
+      .from("orders")
+      .update({ billed })
+      .eq("id", id)
+    if (!error) {
+      fetchOrders()
+      toast.success(billed ? "Marcado como facturado" : "Marcado como pendiente")
+    } else {
+      toast.error("Error al actualizar el estado de facturación")
+    }
   }
 
   const copyToClipboard = (text: string) => {
@@ -157,6 +172,7 @@ export default function Dashboard() {
   const pendientes = orders.filter(o => o.status === 'pendiente' || o.status === 'en_preparacion').length
   const enRuta = orders.filter(o => o.status === 'en_camino').length
   const entregados = orders.filter(o => o.status === 'entregado').length
+  const ventasTotales = orders.reduce((sum, order) => sum + (order.price || 0), 0)
 
   // Filtrar orders basado en statusFilter
   const filteredOrders = orders.filter(order => {
@@ -164,6 +180,14 @@ export default function Dashboard() {
     if (statusFilter === 'pendientes') return order.status === 'pendiente' || order.status === 'en_preparacion'
     if (statusFilter === 'en_ruta') return order.status === 'en_camino'
     if (statusFilter === 'entregados') return order.status === 'entregado'
+    return true
+  })
+
+  // Filtrar orders para facturación basado en billingFilter
+  const filteredBillingOrders = orders.filter(order => {
+    if (billingFilter === 'todos') return true
+    if (billingFilter === 'pendientes') return !order.billed
+    if (billingFilter === 'facturados') return order.billed === true
     return true
   })
 
@@ -226,7 +250,7 @@ export default function Dashboard() {
 
       {/* Resumen de Operaciones (KPIs) */}
       <div className="flex flex-col gap-2">
-        <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <Card 
             className={`bg-amber-50 border-amber-200 py-2 md:py-6 px-2 md:px-6 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pendientes' ? 'ring-2 ring-amber-500' : ''}`}
             onClick={() => setStatusFilter('pendientes')}
@@ -268,6 +292,19 @@ export default function Dashboard() {
               <p className="text-[9px] md:text-xs text-emerald-600 mt-0.5 md:mt-1 hidden md:block">Entregado</p>
             </CardContent>
           </Card>
+
+          <Card 
+            className="bg-slate-50 border-slate-200 py-2 md:py-6 px-2 md:px-6 transition-all hover:shadow-md"
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-0">
+              <CardTitle className="text-[10px] md:text-sm font-medium text-slate-700">Ventas Totales</CardTitle>
+              <DollarSign className="h-3 w-3 md:h-5 md:w-5 text-slate-600" />
+            </CardHeader>
+            <CardContent className="p-0 pt-1">
+              <div className="text-lg md:text-3xl font-bold text-slate-700">${ventasTotales.toFixed(2)}</div>
+              <p className="text-[9px] md:text-xs text-slate-600 mt-0.5 md:mt-1 hidden md:block">Total del día</p>
+            </CardContent>
+          </Card>
         </div>
         {statusFilter !== 'todos' && (
           <div className="flex justify-end">
@@ -283,6 +320,19 @@ export default function Dashboard() {
         )}
       </div>
 
+      <Tabs defaultValue="logistica" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="logistica" className="data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700 data-[state=active]:border-rose-600">
+            <Truck className="mr-2 h-4 w-4" />
+            Logística
+          </TabsTrigger>
+          <TabsTrigger value="facturacion" className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-600">
+            <Receipt className="mr-2 h-4 w-4" />
+            Facturación
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="logistica" className="mt-0">
       <div className="border rounded-xl bg-white shadow-sm overflow-hidden w-full">
         <div className="overflow-x-auto">
           <input
@@ -710,6 +760,134 @@ export default function Dashboard() {
         </Table>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="facturacion" className="mt-0">
+          <div className="flex flex-col gap-4">
+            {/* Filtros de Facturación */}
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant={billingFilter === 'todos' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBillingFilter('todos')}
+                className={`text-xs ${billingFilter === 'todos' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+              >
+                Todos
+              </Button>
+              <Button
+                variant={billingFilter === 'pendientes' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBillingFilter('pendientes')}
+                className={`text-xs ${billingFilter === 'pendientes' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+              >
+                Pendientes de factura
+              </Button>
+              <Button
+                variant={billingFilter === 'facturados' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBillingFilter('facturados')}
+                className={`text-xs ${billingFilter === 'facturados' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+              >
+                Facturados
+              </Button>
+            </div>
+
+            {/* Tabla de Facturación */}
+            <div className="border rounded-xl bg-white shadow-sm overflow-hidden w-full">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="text-xs md:text-sm">Cliente</TableHead>
+                      <TableHead className="text-xs md:text-sm">Datos Fiscales</TableHead>
+                      <TableHead className="text-xs md:text-sm">Email</TableHead>
+                      <TableHead className="text-right text-xs md:text-sm">Monto</TableHead>
+                      <TableHead className="text-center text-xs md:text-sm">Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredBillingOrders.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-slate-500 py-8">
+                          No hay pedidos para mostrar
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredBillingOrders.map((order) => (
+                        <TableRow key={order.id} className="hover:bg-slate-50">
+                          <TableCell className="text-xs">
+                            <div className="font-semibold text-slate-900">{order.client_name}</div>
+                            <div className="text-[10px] text-slate-600">{order.client_phone}</div>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {order.client_tax_id ? (
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[10px] md:text-xs">{order.client_tax_id}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-emerald-600 hover:bg-emerald-50"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(order.client_tax_id!)
+                                    toast.success("Cédula/RUC copiada")
+                                  }}
+                                  title="Copiar"
+                                >
+                                  <Copy size={14} />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 text-[10px]">Sin datos fiscales</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {order.client_email ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] md:text-xs truncate max-w-[150px]">{order.client_email}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-emerald-600 hover:bg-emerald-50"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(order.client_email!)
+                                    toast.success("Email copiado")
+                                  }}
+                                  title="Copiar"
+                                >
+                                  <Copy size={14} />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 text-[10px]">Sin email</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right text-xs font-semibold">
+                            ${order.price?.toFixed(2) || '0.00'}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant={order.billed ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => updateBilled(order.id!, !order.billed)}
+                              className={`text-xs ${
+                                order.billed 
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+                                  : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                              }`}
+                            >
+                              {order.billed ? 'Facturado' : 'Pendiente'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </main>
   )
 }
