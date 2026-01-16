@@ -45,12 +45,12 @@ const orderSchema = z.object({
   client_tax_id: z.string().optional().or(z.literal("")),
   client_email: z.string().email("Email inválido").optional().or(z.literal("")),
   product_code: z.string().optional().or(z.literal("")),
-  price: z.number().optional().or(z.literal(null)),
+  price: z.preprocess((val) => (val === "" ? undefined : Number(val)), z.number().optional()),
   extras: z.string().optional().or(z.literal("")),
   observations: z.string().optional().or(z.literal("")),
 })
 
-type OrderFormValues = z.infer<typeof orderSchema>
+type OrderFormValues = Omit<z.infer<typeof orderSchema>, 'price'> & { price?: number | undefined }
 
 const STORAGE_KEY = "floreria_nuevo_pedido_cache"
 
@@ -62,7 +62,7 @@ export default function NuevoPedido() {
   const [errorFields, setErrorFields] = useState<Set<string>>(new Set())
 
   const form = useForm<OrderFormValues>({
-    resolver: zodResolver(orderSchema),
+    resolver: zodResolver(orderSchema) as any,
     defaultValues: {}
   })
 
@@ -640,7 +640,7 @@ export default function NuevoPedido() {
                       inputMode="decimal"
                       placeholder="0.00"
                       className="pl-7"
-                      {...form.register("price", { valueAsNumber: true })} 
+                      {...form.register("price")} 
                     />
                   </div>
                 </div>
