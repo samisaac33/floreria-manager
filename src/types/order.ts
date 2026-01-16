@@ -16,6 +16,7 @@ export interface Order {
   client_tax_id?: string;
   client_email?: string;
   product_code: string;
+  price?: number;
   extras?: string;
   observations?: string;
   status: OrderStatus;

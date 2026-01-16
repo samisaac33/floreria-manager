@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Save, User, MapPin, Flower, X } from "lucide-react"
+import { Loader2, Save, User, MapPin, Flower, X, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -49,6 +49,7 @@ const orderSchema = z.object({
   client_tax_id: z.string().optional().or(z.literal("")),
   client_email: z.string().email("Email inválido").optional().or(z.literal("")),
   product_code: z.string().optional().or(z.literal("")),
+  price: z.union([z.number(), z.nan(), z.undefined()]).optional().transform((val) => (val !== undefined && !isNaN(val) ? val : undefined)),
   extras: z.string().optional().or(z.literal("")),
   observations: z.string().optional().or(z.literal("")),
 })
@@ -103,6 +104,7 @@ export default function EditarPedido() {
             client_tax_id: data.client_tax_id || "",
             client_email: data.client_email || "",
             product_code: data.product_code || "",
+            price: data.price || undefined,
             extras: data.extras || "",
             observations: data.observations || "",
           })
@@ -132,6 +134,7 @@ export default function EditarPedido() {
       client_phone: "Teléfono del cliente",
       client_email: "Email del cliente",
       product_code: "Código del producto",
+      price: "Precio de venta",
     }
     return fieldNames[fieldName] || fieldName
   }
@@ -334,9 +337,25 @@ export default function EditarPedido() {
                 <CardDescription>¿Qué vamos a entregar?</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Código del Producto (SKU)</Label>
-                  <Input {...form.register("product_code")} placeholder="Ej: RAMO-ROJO-01" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Precio de Venta</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                      <Input 
+                        {...form.register("price", { valueAsNumber: true })} 
+                        type="number"
+                        step="0.01"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Código del Producto (SKU)</Label>
+                    <Input {...form.register("product_code")} placeholder="Ej: RAMO-ROJO-01" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Extras / Adicionales</Label>
