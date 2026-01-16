@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Camera, Upload, CheckCircle, Loader2, Package } from "lucide-react"
+import imageCompression from 'browser-image-compression'
 
 export default function EntregarPedido() {
   const { id } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [compressing, setCompressing] = useState(false)
   const [alreadyUploaded, setAlreadyUploaded] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -73,18 +75,32 @@ export default function EntregarPedido() {
   const handleUpload = async () => {
     if (!selectedFile || !order?.id) return
 
-    setUploading(true)
+    setCompressing(true)
+    let compressedFile: File = selectedFile
 
     try {
+      // Opciones de compresión
+      const options = {
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1280,
+        useWebWorker: true
+      }
+
+      // Comprimir imagen
+      compressedFile = await imageCompression(selectedFile, options)
+      
+      setCompressing(false)
+      setUploading(true)
+
       // Generar nombre único para el archivo
-      const fileExt = selectedFile.name.split('.').pop()
+      const fileExt = compressedFile.name.split('.').pop()
       const fileName = `${order.id}-${Date.now()}.${fileExt}`
       const filePath = `${fileName}`
 
-      // Subir a Supabase Storage
+      // Subir a Supabase Storage (archivo comprimido)
       const { error: uploadError } = await supabase.storage
         .from('delivery-photos')
-        .upload(filePath, selectedFile, {
+        .upload(filePath, compressedFile, {
           cacheControl: '3600',
           upsert: false
         })
@@ -123,6 +139,7 @@ export default function EntregarPedido() {
       })
     } finally {
       setUploading(false)
+      setCompressing(false)
     }
   }
 
@@ -264,10 +281,15 @@ export default function EntregarPedido() {
                   </Button>
                   <Button
                     onClick={handleUpload}
-                    disabled={uploading}
+                    disabled={uploading || compressing}
                     className="flex-1 bg-rose-600 hover:bg-rose-700"
                   >
-                    {uploading ? (
+                    {compressing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Comprimiendo imagen...
+                      </>
+                    ) : uploading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Subiendo...
