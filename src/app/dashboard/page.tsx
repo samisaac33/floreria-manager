@@ -32,7 +32,7 @@ import {
 import { 
   Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card"
-import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical, DollarSign, Receipt, FileText, Settings } from "lucide-react"
+import { PlusCircle, MapPin, Phone, Package, RefreshCw, User, Copy, Printer, Clock, Truck, CheckCircle, MapPinOff, LogOut, Trash2, Upload, Image as ImageIcon, Loader2, MessageCircle, Pencil, MoreVertical, DollarSign, Receipt, FileText, Settings, Shield } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +47,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [storeName, setStoreName] = useState<string>("")
   const [storeId, setStoreId] = useState<string | null>(null)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const today = new Date()
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>(() => {
     const todayStr = formatLocalDate(today)
@@ -70,6 +71,17 @@ export default function Dashboard() {
         return
       }
 
+      // Verificar si es super admin
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", user.id)
+        .single()
+
+      if (profile?.is_super_admin) {
+        setIsSuperAdmin(true)
+      }
+
       const { data, error } = await supabase
         .from("stores")
         .select("id, name")
@@ -80,7 +92,12 @@ export default function Dashboard() {
         setStoreName(data.name || "Logística Florería")
         setStoreId(data.id)
       } else {
-        setStoreName("Logística Florería")
+        // Si no hay tienda pero es super admin, permitir continuar
+        if (!profile?.is_super_admin) {
+          setStoreName("Logística Florería")
+        } else {
+          setStoreName("Super Admin")
+        }
       }
     } catch (error) {
       console.error("Error al cargar tienda:", error)
@@ -99,8 +116,15 @@ export default function Dashboard() {
       return
     }
 
-    // Si no hay storeId, no cargar pedidos aún
-    if (!storeId) {
+    // Si no hay storeId y no es super admin, no cargar pedidos
+    if (!storeId && !isSuperAdmin) {
+      setLoading(false)
+      return
+    }
+
+    // Si es super admin pero no tiene tienda, no cargar pedidos (verá mensaje vacío)
+    if (!storeId && isSuperAdmin) {
+      setOrders([])
       setLoading(false)
       return
     }
@@ -378,6 +402,18 @@ export default function Dashboard() {
             <Button variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10 shrink-0" onClick={fetchOrders}>
               <RefreshCw size={16}/>
             </Button>
+            {isSuperAdmin && (
+              <Link href="/super-admin">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-xs md:text-sm shrink-0 border-yellow-600 text-yellow-700 hover:border-yellow-700 hover:bg-yellow-50"
+                  title="Panel de Administración Maestro"
+                >
+                  <Shield className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Panel Maestro</span>
+                </Button>
+              </Link>
+            )}
             <Link href="/configuracion">
               <Button 
                 variant="outline" 

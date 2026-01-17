@@ -67,17 +67,27 @@ export async function middleware(request: NextRequest) {
   }
 
   // Para todas las demás rutas protegidas, verificar si tiene tienda configurada
-  if (user && pathname !== '/configuracion') {
-    // Verificar si el usuario tiene una tienda
-    const { data: store, error } = await supabase
-      .from("stores")
-      .select("id")
-      .eq("owner_id", user.id)
+  // EXCEPCIÓN: Los super admins pueden acceder sin tienda
+  if (user && pathname !== '/configuracion' && pathname !== '/super-admin') {
+    // Verificar si el usuario es super admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_super_admin")
+      .eq("id", user.id)
       .single()
 
-    // Si no hay tienda y no está en /configuracion, redirigir a configuración
-    if (error || !store) {
-      return NextResponse.redirect(new URL('/configuracion', request.url))
+    // Si no es super admin, verificar si tiene tienda
+    if (!profile?.is_super_admin) {
+      const { data: store, error } = await supabase
+        .from("stores")
+        .select("id")
+        .eq("owner_id", user.id)
+        .single()
+
+      // Si no hay tienda y no está en /configuracion, redirigir a configuración
+      if (error || !store) {
+        return NextResponse.redirect(new URL('/configuracion', request.url))
+      }
     }
   }
 
