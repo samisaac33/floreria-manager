@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Settings, Upload, Loader2, Save, X } from "lucide-react"
+import { Settings, Upload, Loader2, Save, X, Key } from "lucide-react"
 import Link from "next/link"
 import imageCompression from 'browser-image-compression'
 
@@ -29,6 +29,9 @@ export default function ConfiguracionPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [hasStore, setHasStore] = useState(false) // Para bloquear navegación si no hay tienda
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [updatingPassword, setUpdatingPassword] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -229,6 +232,51 @@ export default function ConfiguracionPage() {
     }
   }
 
+  const handleUpdatePassword = async () => {
+    // Validación: verificar que las contraseñas coincidan
+    if (newPassword !== confirmPassword) {
+      toast.error("Las contraseñas no coinciden", {
+        description: "Por favor, asegúrate de que ambas contraseñas sean iguales."
+      })
+      return
+    }
+
+    // Validación: mínimo 6 caracteres
+    if (newPassword.length < 6) {
+      toast.error("Contraseña muy corta", {
+        description: "La contraseña debe tener al menos 6 caracteres."
+      })
+      return
+    }
+
+    setUpdatingPassword(true)
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (error) {
+        throw error
+      }
+
+      toast.success("Contraseña actualizada correctamente", {
+        description: "Tu contraseña ha sido cambiada exitosamente."
+      })
+
+      // Limpiar campos
+      setNewPassword("")
+      setConfirmPassword("")
+    } catch (error: any) {
+      console.error("Error al actualizar contraseña:", error)
+      toast.error("Error al actualizar la contraseña", {
+        description: error.message || "Intenta nuevamente en unos segundos."
+      })
+    } finally {
+      setUpdatingPassword(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
@@ -381,6 +429,61 @@ export default function ConfiguracionPage() {
                 )}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Sección de Seguridad y Acceso */}
+        <Card className="shadow-xl">
+          <CardHeader>
+            <CardTitle>Seguridad y Acceso</CardTitle>
+            <CardDescription>
+              Actualiza tu contraseña para mantener tu cuenta segura
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Nueva Contraseña</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={updatingPassword}
+                className="border-slate-300"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Repite la contraseña"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={updatingPassword}
+                className="border-slate-300"
+              />
+            </div>
+
+            <Button
+              onClick={handleUpdatePassword}
+              disabled={updatingPassword || !newPassword || !confirmPassword}
+              className="w-full bg-slate-700 hover:bg-slate-800"
+            >
+              {updatingPassword ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Actualizando...
+                </>
+              ) : (
+                <>
+                  <Key className="mr-2 h-4 w-4" />
+                  Actualizar Contraseña
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
       </div>
